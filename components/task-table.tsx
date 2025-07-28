@@ -52,7 +52,7 @@ interface TaskTableProps {
   tasks: Task[]
   onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void
   onTaskDelete?: (taskId: string) => void
-  onCreateTask?: () => void
+  createDialog?: React.ReactNode
 }
 
 // Define columns for the task table
@@ -201,7 +201,7 @@ export function TaskTable({
   tasks, 
   onTaskUpdate, 
   onTaskDelete, 
-  onCreateTask 
+  createDialog 
 }: TaskTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -264,10 +264,7 @@ export function TaskTable({
             </div>
           </div>
         </div>
-        <Button onClick={onCreateTask} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Task
-        </Button>
+        {createDialog}
       </div>
 
       {/* Search and filters */}
@@ -331,10 +328,7 @@ export function TaskTable({
                 >
                   <div className="flex flex-col items-center gap-2">
                     <div className="text-muted-foreground">No tasks found</div>
-                    <Button variant="outline" size="sm" onClick={onCreateTask}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create your first task
-                    </Button>
+                    {createDialog}
                   </div>
                 </TableCell>
               </TableRow>

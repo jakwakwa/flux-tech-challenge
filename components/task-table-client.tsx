@@ -1,7 +1,10 @@
 "use client"
 
+import { Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { CreateDialog } from "./create-dialog"
 import { type Task, TaskTable } from "./task-table"
 
 interface TaskTableClientProps {
@@ -67,18 +70,34 @@ export function TaskTableClient({ initialTasks }: TaskTableClientProps) {
     }
   }
 
-  const handleCreateTask = () => {
-    // For now, just navigate to a create page or open a modal
-    // This could be enhanced to show a form modal
-    router.push('/tasks/new')
-  }
+  const createTaskTrigger = (
+    <Button size="sm">
+      <Plus className="h-4 w-4 mr-2" />
+      Add Task
+    </Button>
+  )
+
+  const createFirstTaskTrigger = (
+    <Button variant="outline" size="sm">
+      <Plus className="h-4 w-4 mr-2" />
+      Create your first task
+    </Button>
+  )
 
   return (
-    <TaskTable
-      tasks={tasks}
-      onTaskUpdate={handleTaskUpdate}
-      onTaskDelete={handleTaskDelete}
-      onCreateTask={handleCreateTask}
-    />
+    <>
+      <TaskTable
+        tasks={tasks}
+        onTaskUpdate={handleTaskUpdate}
+        onTaskDelete={handleTaskDelete}
+        createDialog={
+          tasks.length > 0 ? (
+            <CreateDialog defaultMode="task" trigger={createTaskTrigger} />
+          ) : (
+            <CreateDialog defaultMode="task" trigger={createFirstTaskTrigger} />
+          )
+        }
+      />
+    </>
   )
 } 
