@@ -15,202 +15,59 @@ datasource db {
 }
 
 // ───────────────────────────────────
-// USER AUTHENTICATION & MANAGEMENT
+// USER MODEL
 // ───────────────────────────────────
 
 model User {
-  id              String    @id @default(cuid()) @map("user_id")
-  email           String    @unique @map("email")
-  username        String?   @unique @map("username")
-  firstName       String?   @map("first_name")
-  lastName        String?   @map("last_name")
-  passwordHash    String    @map("password_hash")
-  emailVerified   Boolean   @default(false) @map("email_verified")
-  emailVerifiedAt DateTime? @map("email_verified_at")
-  profileImage    String?   @map("profile_image")
-  isActive        Boolean   @default(true) @map("is_active")
-  lastLoginAt     DateTime? @map("last_login_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id        String   @id @default(cuid()) @map("user_id")
+  email     String   @unique @map("email")
+  password  String?  @map("password")
+  name      String?  @map("name")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relationships
-  sessions                Session[]
-  todos                   Todo[]
-  categories              Category[]
-  emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens     PasswordResetToken[]
+  lists List[]
 
   @@map("users")
 }
 
 // ───────────────────────────────────
-// SESSION MANAGEMENT
+// LIST MODEL
 // ───────────────────────────────────
 
-model Session {
-  id        String   @id @default(cuid()) @map("session_id")
+model List {
+  id        String   @id @default(cuid()) @map("list_id")
+  title     String   @map("title")
   userId    String   @map("user_id")
-  token     String   @unique @map("token")
-  expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Device/Browser information for security
-  userAgent String? @map("user_agent")
-  ipAddress String? @map("ip_address")
-  isActive  Boolean @default(true) @map("is_active")
-
   // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
 
   @@index([userId])
-  @@index([token])
-  @@index([expiresAt])
-  @@map("sessions")
+  @@map("lists")
 }
 
 // ───────────────────────────────────
-// EMAIL VERIFICATION
+// TASK MODEL
 // ───────────────────────────────────
 
-model EmailVerificationToken {
-  id        String   @id @default(cuid()) @map("token_id")
-  userId    String   @map("user_id")
-  token     String   @unique @map("token")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("email_verification_tokens")
-}
-
-// ───────────────────────────────────
-// PASSWORD RESET
-// ───────────────────────────────────
-
-model PasswordResetToken {
-  id        String    @id @default(cuid()) @map("token_id")
-  userId    String    @map("user_id")
-  token     String    @unique @map("token")
-  expiresAt DateTime  @map("expires_at")
-  usedAt    DateTime? @map("used_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  // Relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-  @@map("password_reset_tokens")
-}
-
-// ───────────────────────────────────
-// TODO CATEGORIES
-// ───────────────────────────────────
-
-model Category {
-  id          String   @id @default(cuid()) @map("category_id")
-  userId      String   @map("user_id")
-  name        String   @map("name")
+model Task {
+  id          String   @id @default(cuid()) @map("task_id")
+  title       String   @map("title")
   description String?  @map("description")
-  color       String?  @map("color") // Hex color code for UI customization
-  icon        String?  @map("icon") // Icon identifier for UI
-  sortOrder   Int      @default(0) @map("sort_order")
+  completed   Boolean  @default(false) @map("completed")
+  listId      String   @map("list_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relationships
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  todos Todo[]
+  list List @relation(fields: [listId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, name]) // Prevent duplicate category names per user
-  @@index([userId])
-  @@map("categories")
-}
-
-// ───────────────────────────────────
-// TODO TASKS
-// ───────────────────────────────────
-
-model Todo {
-  id          String       @id @default(cuid()) @map("todo_id")
-  userId      String       @map("user_id")
-  categoryId  String?      @map("category_id")
-  title       String       @map("title")
-  description String?      @map("description")
-  status      TodoStatus   @default(PENDING) @map("status")
-  priority    TodoPriority @default(MEDIUM) @map("priority")
-  dueDate     DateTime?    @map("due_date")
-  completedAt DateTime?    @map("completed_at")
-  sortOrder   Int          @default(0) @map("sort_order")
-  isArchived  Boolean      @default(false) @map("is_archived")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  // Relationships
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  tags     TodoTag[]
-
-  @@index([userId])
-  @@index([status])
-  @@index([priority])
-  @@index([dueDate])
-  @@index([categoryId])
-  @@index([userId, status])
-  @@index([userId, createdAt])
-  @@map("todos")
-}
-
-// ───────────────────────────────────
-// TODO TAGS (Many-to-Many)
-// ───────────────────────────────────
-
-model Tag {
-  id        String   @id @default(cuid()) @map("tag_id")
-  userId    String   @map("user_id")
-  name      String   @map("name")
-  color     String?  @map("color")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  // Relationships
-  todos TodoTag[]
-
-  @@unique([userId, name]) // Prevent duplicate tag names per user
-  @@index([userId])
-  @@map("tags")
-}
-
-model TodoTag {
-  todoId String @map("todo_id")
-  tagId  String @map("tag_id")
-
-  // Relationships
-  todo Todo @relation(fields: [todoId], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([todoId, tagId])
-  @@map("todo_tags")
-}
-
-// ───────────────────────────────────
-// ENUMS
-// ───────────────────────────────────
-
-enum TodoStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum TodoPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
+  @@index([listId])
+  @@index([completed])
+  @@map("tasks")
 }

@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 const defaultUrl = process.env.VERCEL_URL
 	? `https://${process.env.VERCEL_URL}`
@@ -44,7 +45,9 @@ export default function RootLayout({
 					>
 						<header className="p-4 border-b">
 							<div className="flex justify-between items-center">
-								<h1 className="text-xl font-bold">My App</h1>
+								<ThemeSwitcher />
+								<h1 className="text-xl font-bold">Flux Todo App 	
+								</h1>
 								<div className="flex items-center gap-4">
 									<SignedOut>
 										<SignInButton />

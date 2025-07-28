@@ -1,29 +1,19 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import Link from "next/link";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default function Home() {
 	return (
 		<main className="min-h-screen flex flex-col items-center">
-			<div className="flex-1 w-full flex flex-col gap-20 items-center">
-				<nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-					<div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-						<div className="flex gap-5 items-center font-semibold">
-							<Link href={"/"}>Next.js Clerk Starter</Link>
-							<div className="flex items-center gap-2">deploy</div>
-						</div>
-						<ThemeSwitcher />
-					</div>
-				</nav>
+			<div className="flex-1 w-full flex flex-col py-12 gap-20 items-center">
 				<div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
 					<div className="flex-1 flex flex-col gap-6 px-4">
 						<SignedOut>
 							<div className="text-center">
 								<h1 className="text-4xl font-bold mb-4">
-									Welcome to Clerk Auth
+									Welcome to Flux Todo App
 								</h1>
 								<p className="text-lg text-muted-foreground mb-8">
-									Sign in or sign up to get started with your account.
+									Sign in or sign up to get started with creating your first
+									task.
 								</p>
 							</div>
 						</SignedOut>
@@ -38,8 +28,7 @@ export default function Home() {
 										Getting Started
 									</h2>
 									<p className="text-muted-foreground">
-										Your authentication is now working with Clerk. You can start
-										building your app!
+										Create your first task
 									</p>
 								</div>
 							</div>
