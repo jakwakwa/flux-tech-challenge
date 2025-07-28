@@ -1,16 +1,8 @@
-import {
-	ClerkProvider,
-	SignedIn,
-	SignedOut,
-	SignInButton,
-	SignUpButton,
-	UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 
 const defaultUrl = process.env.VERCEL_URL
 	? `https://${process.env.VERCEL_URL}`
@@ -18,8 +10,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
 	metadataBase: new URL(defaultUrl),
-	title: "Next.js and Clerk Starter Kit",
-	description: "The fastest way to build apps with Next.js and Clerk",
+	title: "Flux Todo App - Organize Your Tasks",
+	description: "A simple and intuitive todo list application to organize your tasks and boost productivity.",
 };
 
 const geistSans = Geist({
@@ -43,22 +35,6 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						<header className="p-4 border-b">
-							<div className="flex justify-between items-center">
-								<ThemeSwitcher />
-								<h1 className="text-xl font-bold">Flux Todo App 	
-								</h1>
-								<div className="flex items-center gap-4">
-									<SignedOut>
-										<SignInButton />
-										<SignUpButton />
-									</SignedOut>
-									<SignedIn>
-										<UserButton />
-									</SignedIn>
-								</div>
-							</div>
-						</header>
 						{children}
 					</ThemeProvider>
 				</body>
