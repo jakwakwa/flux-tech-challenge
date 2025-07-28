@@ -1,12 +1,31 @@
 "use client"
 
-import { type LucideIcon } from "lucide-react"
+import { 
+  CheckSquare,
+  Home,
+  Plus,
+  Search,
+  Settings2,
+  Trash2,
+  User,
+} from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+
+const iconMap = {
+  Home,
+  Search,
+  CheckSquare,
+  Plus,
+  User,
+  Settings2,
+  Trash2,
+}
 
 export function NavMain({
   items,
@@ -14,22 +33,31 @@ export function NavMain({
   items: {
     title: string
     url: string
-    icon: LucideIcon
+    icon: keyof typeof iconMap
     isActive?: boolean
+    badge?: string
   }[]
 }) {
   return (
     <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild isActive={item.isActive}>
-            <a href={item.url}>
-              <item.icon />
-              <span>{item.title}</span>
-            </a>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {items.map((item) => {
+        const IconComponent = iconMap[item.icon]
+        return (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild isActive={item.isActive}>
+              <a href={item.url}>
+                <IconComponent />
+                <span>{item.title}</span>
+                {item.badge && (
+                  <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-xs">
+                    {item.badge}
+                  </Badge>
+                )}
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )
+      })}
     </SidebarMenu>
   )
 }
