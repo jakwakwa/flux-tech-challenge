@@ -44,6 +44,16 @@ export async function POST(request: Request) {
 		return new NextResponse("Unauthorized", { status: 401 });
 	}
 
+	// Ensure user exists in database (create if not exists)
+	await prisma.user.upsert({
+		where: { id: userId },
+		update: {},
+		create: {
+			id: userId,
+			email: "", // We don't have access to user details in this API route
+		},
+	});
+
 	try {
 		const body = await request.json();
 		const { title, description, listId } = body;

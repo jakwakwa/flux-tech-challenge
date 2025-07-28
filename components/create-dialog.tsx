@@ -130,7 +130,8 @@ export function CreateDialog({ trigger, defaultMode = "task" }: CreateDialogProp
         setOpen(false)
         router.refresh()
       } else {
-        console.error('Failed to create task')
+        const errorText = await response.text()
+        console.error('Failed to create task:', response.status, errorText)
       }
     } catch (error) {
       console.error('Error creating task:', error)
@@ -161,7 +162,8 @@ export function CreateDialog({ trigger, defaultMode = "task" }: CreateDialogProp
         setOpen(false)
         router.refresh()
       } else {
-        console.error('Failed to create list')
+        const errorText = await response.text()
+        console.error('Failed to create list:', response.status, errorText)
       }
     } catch (error) {
       console.error('Error creating list:', error)

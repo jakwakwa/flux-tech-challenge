@@ -41,6 +41,16 @@ export async function POST(request: Request) {
 		return new NextResponse("Unauthorized", { status: 401 });
 	}
 
+	// Ensure user exists in database (create if not exists)
+	await prisma.user.upsert({
+		where: { id: userId },
+		update: {},
+		create: {
+			id: userId,
+			email: "", // We don't have access to user details in this API route
+		},
+	});
+
 	try {
 		const body = await request.json();
 		const { title } = body;
@@ -63,6 +73,14 @@ export async function POST(request: Request) {
 		return NextResponse.json(list, { status: 201 });
 	} catch (error) {
 		console.error("Error creating list:", error);
+
+		// Enhanced error reporting for better debugging
+		if (error instanceof Error) {
+			return new NextResponse(`Internal Server Error: ${error.message}`, {
+				status: 500,
+			});
+		}
+
 		return new NextResponse("Internal Server Error", { status: 500 });
 	}
 }

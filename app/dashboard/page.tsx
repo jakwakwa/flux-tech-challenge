@@ -28,6 +28,20 @@ export default async function Page() {
 
   const user = await currentUser()
   
+  // Ensure user exists in database (create if not exists)
+  await prisma.user.upsert({
+    where: { id: userId },
+    update: {
+      email: user?.emailAddresses?.[0]?.emailAddress || '',
+      name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null,
+    },
+    create: {
+      id: userId,
+      email: user?.emailAddresses?.[0]?.emailAddress || '',
+      name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null,
+    },
+  })
+  
   // Fetch user's tasks with list information
   const userTasks = await prisma.task.findMany({
     where: {
