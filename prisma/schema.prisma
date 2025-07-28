@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────
+// USER AUTHENTICATION & MANAGEMENT
+// ───────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid()) @map("user_id")
+  email           String    @unique @map("email")
+  username        String?   @unique @map("username")
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  passwordHash    String    @map("password_hash")
+  emailVerified   Boolean   @default(false) @map("email_verified")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  profileImage    String?   @map("profile_image")
+  isActive        Boolean   @default(true) @map("is_active")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  sessions                Session[]
+  todos                   Todo[]
+  categories              Category[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+
+  @@map("users")
+}
+
+// ───────────────────────────────────
+// SESSION MANAGEMENT
+// ───────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid()) @map("session_id")
+  userId    String   @map("user_id")
+  token     String   @unique @map("token")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Device/Browser information for security
+  userAgent String? @map("user_agent")
+  ipAddress String? @map("ip_address")
+  isActive  Boolean @default(true) @map("is_active")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ───────────────────────────────────
+// EMAIL VERIFICATION
+// ───────────────────────────────────
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid()) @map("token_id")
+  userId    String   @map("user_id")
+  token     String   @unique @map("token")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("email_verification_tokens")
+}
+
+// ───────────────────────────────────
+// PASSWORD RESET
+// ───────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(cuid()) @map("token_id")
+  userId    String    @map("user_id")
+  token     String    @unique @map("token")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+// ───────────────────────────────────
+// TODO CATEGORIES
+// ───────────────────────────────────
+
+model Category {
+  id          String   @id @default(cuid()) @map("category_id")
+  userId      String   @map("user_id")
+  name        String   @map("name")
+  description String?  @map("description")
+  color       String?  @map("color") // Hex color code for UI customization
+  icon        String?  @map("icon") // Icon identifier for UI
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todos Todo[]
+
+  @@unique([userId, name]) // Prevent duplicate category names per user
+  @@index([userId])
+  @@map("categories")
+}
+
+// ───────────────────────────────────
+// TODO TASKS
+// ───────────────────────────────────
+
+model Todo {
+  id          String       @id @default(cuid()) @map("todo_id")
+  userId      String       @map("user_id")
+  categoryId  String?      @map("category_id")
+  title       String       @map("title")
+  description String?      @map("description")
+  status      TodoStatus   @default(PENDING) @map("status")
+  priority    TodoPriority @default(MEDIUM) @map("priority")
+  dueDate     DateTime?    @map("due_date")
+  completedAt DateTime?    @map("completed_at")
+  sortOrder   Int          @default(0) @map("sort_order")
+  isArchived  Boolean      @default(false) @map("is_archived")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // Relationships
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags     TodoTag[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([categoryId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@map("todos")
+}
+
+// ───────────────────────────────────
+// TODO TAGS (Many-to-Many)
+// ───────────────────────────────────
+
+model Tag {
+  id        String   @id @default(cuid()) @map("tag_id")
+  userId    String   @map("user_id")
+  name      String   @map("name")
+  color     String?  @map("color")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  todos TodoTag[]
+
+  @@unique([userId, name]) // Prevent duplicate tag names per user
+  @@index([userId])
+  @@map("tags")
+}
+
+model TodoTag {
+  todoId String @map("todo_id")
+  tagId  String @map("tag_id")
+
+  // Relationships
+  todo Todo @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([todoId, tagId])
+  @@map("todo_tags")
+}
+
+// ───────────────────────────────────
+// ENUMS
+// ───────────────────────────────────
+
+enum TodoStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TodoPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
