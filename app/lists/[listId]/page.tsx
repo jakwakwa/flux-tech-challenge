@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { CreateDialog } from "@/components/create-dialog";
 import prisma from "@/lib/prisma";
 
 interface ListPageProps {
@@ -96,10 +97,15 @@ export default async function ListPage({ params }: ListPageProps) {
 
 	// Create task button for the TaskTable
 	const createTaskButton = (
-		<Button size="sm">
-			<Plus className="h-4 w-4 mr-2" />
-			Add Task
-		</Button>
+		<CreateDialog
+			defaultMode="task"
+			trigger={
+				<Button size="sm">
+					<Plus className="h-4 w-4 mr-2" />
+					Add Task
+				</Button>
+			}
+		/>
 	);
 
 	return (
