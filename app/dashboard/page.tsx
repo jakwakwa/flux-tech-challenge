@@ -160,9 +160,6 @@ export default async function Page({
 						) : (
 							<h1 className="text-2xl font-bold">Welcome back 👋</h1>
 						)}
-						<h2 className="text-xl font-bold">
-							{selectedList ? `${selectedList.title}` : "All Lists"}
-						</h2>
 						<p className="text-muted-foreground">
 							Here's what's happening with your tasks today.
 						</p>

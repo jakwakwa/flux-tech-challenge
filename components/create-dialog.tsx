@@ -226,14 +226,6 @@ export function CreateDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				{trigger || (
-					<Button size="sm">
-						<Plus className="h-4 w-4 mr-2" />
-						Create
-					</Button>
-				)}
-			</DialogTrigger>
 			<DialogContent className="overflow-hidden p-0 md:max-h-[600px] md:max-w-[700px] lg:max-w-[800px]">
 				<DialogTitle className="sr-only">
 					Create {activeMode === "task" ? "Task" : "List"}
@@ -496,14 +488,6 @@ export function EditTaskDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				{trigger || (
-					<Button size="sm" variant="outline">
-						<Edit className="h-4 w-4 mr-2" />
-						Edit
-					</Button>
-				)}
-			</DialogTrigger>
 			<DialogContent className="overflow-hidden p-0 md:max-h-[600px] md:max-w-[500px]">
 				<DialogTitle className="sr-only">Edit Task</DialogTitle>
 				<DialogDescription className="sr-only">

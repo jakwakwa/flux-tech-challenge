@@ -26,7 +26,6 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -71,34 +70,11 @@ const createColumns = (
 	onTaskEdit?: (task: Task) => void,
 ): ColumnDef<Task>[] => [
 	{
-		id: "select",
-		header: ({ table }) => (
-			<div className="flex items-center justify-center">
-				<Checkbox
-					checked={
-						table.getIsAllPageRowsSelected() ||
-						(table.getIsSomePageRowsSelected() && "indeterminate")
-					}
-					onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-					aria-label="Select all"
-				/>
-			</div>
-		),
-		cell: ({ row }) => (
-			<div className="flex items-center justify-center">
-				<Checkbox
-					checked={row.getIsSelected()}
-					onCheckedChange={(value) => row.toggleSelected(!!value)}
-					aria-label="Select row"
-				/>
-			</div>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
-	{
 		id: "status",
 		header: "Status",
+		size: 80,
+		minSize: 60,
+		maxSize: 100,
 		cell: ({ row }) => {
 			const task = row.original;
 			return (
@@ -126,22 +102,27 @@ const createColumns = (
 	{
 		accessorKey: "title",
 		header: "Task",
+		size: 300,
+		minSize: 200,
+		maxSize: 400,
 		cell: ({ row }) => {
 			const task = row.original;
 			return (
-				<div className="flex flex-col gap-1 max-w-[300px]">
+				<div className="flex flex-col gap-1 w-full min-w-0">
 					<div
-						className={`font-medium ${
+						className={`font-medium text-md truncate ${
 							task.completed ? "line-through text-muted-foreground" : ""
 						}`}
+						title={task.title}
 					>
 						{task.title}
 					</div>
 					{task.description && (
 						<div
-							className={`text-sm text-muted-foreground ${
+							className={`text-sm text-muted-foreground truncate ${
 								task.completed ? "line-through" : ""
 							}`}
+							title={task.description}
 						>
 							{task.description}
 						</div>
@@ -214,7 +195,6 @@ export function TaskTable({
 	onTaskEdit,
 	createDialog,
 }: TaskTableProps) {
-	const [rowSelection, setRowSelection] = React.useState({});
 	const [columnVisibility, setColumnVisibility] =
 		React.useState<VisibilityState>({});
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -234,12 +214,11 @@ export function TaskTable({
 		state: {
 			sorting,
 			columnVisibility,
-			rowSelection,
 			columnFilters,
 			globalFilter,
 		},
-		enableRowSelection: true,
-		onRowSelectionChange: setRowSelection,
+		enableColumnResizing: true,
+		columnResizeMode: "onChange",
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
@@ -303,12 +282,17 @@ export function TaskTable({
 
 			{/* Table */}
 			<div className="rounded-md border">
-				<Table>
+				<Table style={{ tableLayout: "fixed", width: "100%" }}>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<TableRow key={headerGroup.id}>
 								{headerGroup.headers.map((header) => (
-									<TableHead key={header.id}>
+									<TableHead
+										key={header.id}
+										style={{
+											width: header.getSize(),
+										}}
+									>
 										{header.isPlaceholder
 											? null
 											: flexRender(
@@ -325,11 +309,15 @@ export function TaskTable({
 							table.getRowModel().rows.map((row) => (
 								<TableRow
 									key={row.id}
-									data-state={row.getIsSelected() && "selected"}
 									className={row.original.completed ? "bg-muted/50" : ""}
 								>
 									{row.getVisibleCells().map((cell) => (
-										<TableCell key={cell.id}>
+										<TableCell
+											key={cell.id}
+											style={{
+												width: cell.column.getSize(),
+											}}
+										>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),

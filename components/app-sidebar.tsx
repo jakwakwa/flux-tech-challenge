@@ -97,42 +97,18 @@ export async function AppSidebar({
 			icon: "Home" as const,
 			isActive: true,
 		},
-		{
-			title: "Create List",
-			url: "/lists/new",
-			icon: "Plus" as const,
-		},
-	];
-
-	const navSecondary = [
-		{
-			title: "Profile",
-			url: "/profile",
-			icon: "User" as const,
-		},
-		{
-			title: "Settings",
-			url: "/settings",
-			icon: "Settings2" as const,
-		},
-		{
-			title: "Trash",
-			url: "/trash",
-			icon: "Trash2" as const,
-		},
 	];
 
 	return (
 		<Sidebar className="border-r-0" {...props}>
 			<SidebarHeader>
 				<div className="p-2">
-					<h2 className="text-lg font-semibold px-2">Todo Lists</h2>
+					<h2 className="text-lg font-semibold px-2">Flux Todo List App</h2>
 				</div>
 				<NavMain items={navMain} />
 			</SidebarHeader>
 			<SidebarContent>
 				<NavTodoLists todoLists={todoLists} />
-				<NavSecondary items={navSecondary} className="mt-auto" />
 			</SidebarContent>
 			<SidebarRail />
 		</Sidebar>
