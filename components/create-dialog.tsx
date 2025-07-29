@@ -129,6 +129,20 @@ export function CreateDialog({
 
 	// Lists are automatically available from the store
 
+	// Reset form state when dialog opens/closes or defaultMode changes
+	React.useEffect(() => {
+		if (open) {
+			// Reset to the correct mode when dialog opens
+			setActiveMode(defaultMode);
+			// Clear all form fields
+			setTaskTitle("");
+			setTaskDescription("");
+			setSelectedListId("");
+			setListTitle("");
+			setListError(null);
+		}
+	}, [open, defaultMode]);
+
 	// Clear errors when dialog closes or mode changes
 	React.useEffect(() => {
 		if (!open || activeMode !== "list") {
@@ -148,11 +162,13 @@ export function CreateDialog({
 			});
 
 			if (newTask) {
-				// Reset form
+				// Reset form completely
 				setTaskTitle("");
 				setTaskDescription("");
 				setSelectedListId("");
 				setOpen(false);
+				// Reset to default mode for next time
+				setActiveMode(defaultMode);
 				
 				addToast({
 					type: 'success',
@@ -179,10 +195,12 @@ export function CreateDialog({
 			const newList = await createList(listTitle.trim());
 
 			if (newList) {
-				// Reset form
+				// Reset form completely
 				setListTitle("");
 				setListError(null);
 				setOpen(false);
+				// Reset to default mode for next time
+				setActiveMode(defaultMode);
 				
 				addToast({
 					type: 'success',
@@ -402,12 +420,15 @@ export function EditTaskDialog({
 
 	// Lists are automatically available from the store
 
-	// Reset form when task prop changes
+	// Reset form when task prop changes or dialog opens/closes
 	React.useEffect(() => {
-		setTaskTitle(task.title);
-		setTaskDescription(task.description || "");
-		setSelectedListId(task.listId);
-	}, [task]);
+		if (open) {
+			// Reset form to task data when dialog opens
+			setTaskTitle(task.title);
+			setTaskDescription(task.description || "");
+			setSelectedListId(task.listId);
+		}
+	}, [task, open]);
 
 	const handleUpdateTask = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -557,10 +578,13 @@ export function EditListDialog({
 	// List form state - initialize with existing list data
 	const [listTitle, setListTitle] = React.useState(list.title);
 
-	// Reset form when list prop changes
+	// Reset form when list prop changes or dialog opens/closes
 	React.useEffect(() => {
-		setListTitle(list.title);
-	}, [list]);
+		if (open) {
+			// Reset form to list data when dialog opens
+			setListTitle(list.title);
+		}
+	}, [list, open]);
 
 	const handleUpdateList = async (e: React.FormEvent) => {
 		e.preventDefault();
