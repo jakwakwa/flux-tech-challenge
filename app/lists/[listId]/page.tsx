@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateDialog } from "@/components/create-dialog";
+import { StoreInitializer } from "@/components/store-initializer";
 import prisma from "@/lib/prisma";
 
 interface ListPageProps {
@@ -78,6 +79,19 @@ export default async function ListPage({ params }: ListPageProps) {
 		notFound();
 	}
 
+	// Fetch all user lists for the store initialization
+	const userLists = await prisma.list.findMany({
+		where: {
+			userId: userId,
+		},
+		include: {
+			tasks: true,
+		},
+		orderBy: {
+			createdAt: "desc",
+		},
+	});
+
 	// Transform tasks for TaskTable
 	const tasksForTable = list.tasks.map((task) => ({
 		id: task.id,
@@ -110,6 +124,7 @@ export default async function ListPage({ params }: ListPageProps) {
 
 	return (
 		<SidebarProvider>
+			<StoreInitializer lists={userLists} tasks={list.tasks} />
 			<AppSidebar />
 			<SidebarInset>
 				<header className="flex h-14 shrink-0 items-center gap-2">

@@ -34,6 +34,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { CreateDialog } from "@/components/create-dialog";
+import { StoreInitializer } from "@/components/store-initializer";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 
@@ -87,6 +88,7 @@ export default async function DashboardPage() {
 
 	return (
 		<SidebarProvider>
+			<StoreInitializer lists={userLists} />
 			<AppSidebar />
 			<SidebarInset>
 				<header className="flex h-14 shrink-0 items-center gap-2">
