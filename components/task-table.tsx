@@ -411,11 +411,9 @@ export function TaskTable({
 				</Badge>
 				
 				{/* Create Task Button */}
-				{createDialog && (
-					<div className="ml-2">
-						{createDialog}
-					</div>
-				)}
+				<div className="ml-2">
+					{createDialog}
+				</div>
 			</div>
 
 			{/* Table */}
