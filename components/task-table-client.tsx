@@ -86,7 +86,7 @@ export function TaskTableClient({ initialTasks }: TaskTableClientProps) {
 	};
 
 	const createTaskTrigger = (
-		<Button size="sm">
+		<Button size="sm" className="bg-primary hover:bg-primary/90">
 			<Plus className="h-4 w-4 mr-2" />
 			Add Task
 		</Button>
@@ -107,11 +107,7 @@ export function TaskTableClient({ initialTasks }: TaskTableClientProps) {
 				onTaskDelete={handleTaskDelete}
 				onTaskEdit={handleTaskEdit}
 				createDialog={
-					tasks.length > 0 ? (
-						<CreateDialog defaultMode="task" trigger={createTaskTrigger} />
-					) : (
-						<CreateDialog defaultMode="task" trigger={createFirstTaskTrigger} />
-					)
+					<CreateDialog defaultMode="task" trigger={createTaskTrigger} />
 				}
 			/>
 			{editingTask && (
