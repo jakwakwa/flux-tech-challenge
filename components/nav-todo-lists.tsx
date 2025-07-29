@@ -55,8 +55,8 @@ export function NavTodoLists({ todoLists }: NavTodoListsProps) {
 					<Collapsible key={list.id} asChild defaultOpen>
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip={list.name}>
-								{/* Updated Link to navigate directly to the dashboard with listId */}
-								<Link href={`/dashboard?listId=${list.id}`}>
+								{/* Updated Link to navigate to the list page */}
+								<Link href={`/lists/${list.id}`}>
 									<span className="text-base mr-2">{list.icon}</span>
 									<span className="flex-1 truncate">{list.name}</span>
 									<span className="text-xs text-muted-foreground">
@@ -125,8 +125,8 @@ export function NavTodoLists({ todoLists }: NavTodoListsProps) {
 									{list.tasks.length > 5 && (
 										<SidebarMenuSubItem>
 											<SidebarMenuSubButton asChild>
-												{/* Updated Link for "more tasks" to navigate directly to the dashboard with listId */}
-												<Link href={`/dashboard?listId=${list.id}`}>
+												{/* Updated Link for "more tasks" to navigate to the list page */}
+												<Link href={`/lists/${list.id}`}>
 													<span className="text-xs text-muted-foreground">
 														+{list.tasks.length - 5} more tasks...
 													</span>
