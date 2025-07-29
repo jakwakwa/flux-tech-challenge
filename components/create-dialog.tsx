@@ -124,8 +124,9 @@ export function CreateDialog({
 		try {
 			const response = await fetch("/api/lists");
 			if (response.ok) {
-				const lists = await response.json();
-				setAvailableLists(lists);
+				const result = await response.json();
+				// API returns { success: true, data: [...] }
+				setAvailableLists(result.data || []);
 			}
 		} catch (error) {
 			console.error("Error fetching lists:", error);
