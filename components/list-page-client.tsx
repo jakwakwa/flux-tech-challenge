@@ -43,6 +43,7 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
   const createTaskButton = (
     <CreateDialog
       defaultMode="task"
+      currentListId={listId}
       trigger={
         <Button size="sm">
           <Plus className="h-4 w-4 mr-2" />

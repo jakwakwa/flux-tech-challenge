@@ -49,6 +49,7 @@ interface CreateDialogProps {
 	defaultMode?: "task" | "list";
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	currentListId?: string; // The list ID of the current page (if on a list page)
 }
 
 interface EditTaskDialogProps {
@@ -99,6 +100,7 @@ export function CreateDialog({
 	defaultMode = "task",
 	open: externalOpen,
 	onOpenChange: externalOnOpenChange,
+	currentListId,
 }: CreateDialogProps) {
 	const [internalOpen, setInternalOpen] = React.useState(false);
 
@@ -137,7 +139,8 @@ export function CreateDialog({
 			// Clear all form fields
 			setTaskTitle("");
 			setTaskDescription("");
-			setSelectedListId("");
+			// Pre-select current list if we're on a list page and in task mode
+			setSelectedListId(defaultMode === "task" && currentListId ? currentListId : "");
 			setListTitle("");
 			setListError(null);
 		}
@@ -162,6 +165,9 @@ export function CreateDialog({
 			});
 
 			if (newTask) {
+				// Check if task was created for a different list than current page
+				const isCreatedForDifferentList = currentListId && selectedListId !== currentListId;
+				
 				// Reset form completely
 				setTaskTitle("");
 				setTaskDescription("");
@@ -175,6 +181,12 @@ export function CreateDialog({
 					title: 'Task created',
 					description: 'Your task has been added successfully.',
 				});
+
+				// If task was created for a different list, redirect to that list
+				if (isCreatedForDifferentList) {
+					router.push(`/lists/${selectedListId}`);
+				}
+				// If same list or no current list, stay on current page (reactive update will show task)
 			}
 		} catch (error) {
 			console.error("Error creating task:", error);
