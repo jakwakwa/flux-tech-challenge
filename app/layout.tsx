@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ProgressBarProvider } from "@/components/progress-bar-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,6 +36,7 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
+						<ProgressBarProvider />
 						{children}
 					</ThemeProvider>
 				</body>
