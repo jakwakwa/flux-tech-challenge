@@ -1,204 +1,93 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { ApiResponseHandler } from "@/lib/api-response";
+import { DatabaseService } from "@/lib/services/database";
+import { validateRequired, validateStringLength } from "@/lib/errors";
 
 export async function GET() {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
 	try {
-		// Fetch tasks for the authenticated user
-		const tasks = await prisma.task.findMany({
-			where: {
-				list: {
-					userId: userId,
-				},
-			},
-			include: {
-				list: {
-					select: {
-						id: true,
-						title: true,
-					},
-				},
-			},
-			orderBy: {
-				createdAt: "desc",
-			},
-		});
-
-		return NextResponse.json(tasks, { status: 200 });
+		const userId = await DatabaseService.getAuthenticatedUserId();
+		const tasks = await DatabaseService.getUserTasks(userId);
+		
+		return ApiResponseHandler.success(tasks);
 	} catch (error) {
 		console.error("Error fetching tasks:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error(error as Error);
 	}
 }
 
 export async function POST(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
-	// Ensure user exists in database (create if not exists)
-	await prisma.user.upsert({
-		where: { id: userId },
-		update: {},
-		create: {
-			id: userId,
-			email: "", // We don't have access to user details in this API route
-		},
-	});
-
 	try {
+		const userId = await DatabaseService.getAuthenticatedUserId();
+		await DatabaseService.ensureUserExists(userId);
+
 		const body = await request.json();
 		const { title, description, listId } = body;
 
-		if (!title || !listId) {
-			return new NextResponse("Title and listId are required", { status: 400 });
-		}
+		// Validate input
+		validateRequired(title, "title");
+		validateRequired(listId, "listId");
+		validateStringLength(title, "title", 1, 200);
 
-		// Verify the list belongs to the authenticated user
-		const list = await prisma.list.findFirst({
-			where: {
-				id: listId,
-				userId: userId,
-			},
+		const task = await DatabaseService.createTask(userId, {
+			title,
+			description,
+			listId,
 		});
-
-		if (!list) {
-			return new NextResponse("List not found or unauthorized", {
-				status: 404,
-			});
-		}
-
-		// Create the task
-		const task = await prisma.task.create({
-			data: {
-				title,
-				description,
-				listId,
-			},
-			include: {
-				list: {
-					select: {
-						id: true,
-						title: true,
-					},
-				},
-			},
-		});
-
-		return NextResponse.json(task, { status: 201 });
+		
+		return ApiResponseHandler.success(task, 201);
 	} catch (error) {
 		console.error("Error creating task:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error(error as Error);
 	}
 }
 
 export async function PATCH(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
 	try {
+		const userId = await DatabaseService.getAuthenticatedUserId();
+		
 		const body = await request.json();
 		const { taskId, title, description, completed } = body;
 
-		if (!taskId) {
-			return new NextResponse("Task ID is required", { status: 400 });
+		// Validate input
+		validateRequired(taskId, "taskId");
+
+		const updates: Partial<{ title: string; description: string; completed: boolean }> = {};
+		if (title !== undefined) {
+			validateStringLength(title, "title", 1, 200);
+			updates.title = title;
+		}
+		if (description !== undefined) {
+			updates.description = description;
+		}
+		if (completed !== undefined) {
+			updates.completed = completed;
 		}
 
-		// Verify the task belongs to the authenticated user
-		const existingTask = await prisma.task.findFirst({
-			where: {
-				id: taskId,
-				list: {
-					userId: userId,
-				},
-			},
-		});
-
-		if (!existingTask) {
-			return new NextResponse("Task not found or unauthorized", {
-				status: 404,
-			});
-		}
-
-		// Update the task
-		const updatedTask = await prisma.task.update({
-			where: {
-				id: taskId,
-			},
-			data: {
-				...(title !== undefined && { title }),
-				...(description !== undefined && { description }),
-				...(completed !== undefined && { completed }),
-			},
-			include: {
-				list: {
-					select: {
-						id: true,
-						title: true,
-					},
-				},
-			},
-		});
-
-		return NextResponse.json(updatedTask, { status: 200 });
+		const updatedTask = await DatabaseService.updateTask(taskId, userId, updates);
+		
+		return ApiResponseHandler.success(updatedTask);
 	} catch (error) {
 		console.error("Error updating task:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error(error as Error);
 	}
 }
 
 export async function DELETE(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
 	try {
+		const userId = await DatabaseService.getAuthenticatedUserId();
+		
 		const { searchParams } = new URL(request.url);
 		const taskId = searchParams.get("taskId");
 
 		if (!taskId) {
-			return new NextResponse("Task ID is required", { status: 400 });
+			return ApiResponseHandler.validationError("Task ID is required", "taskId");
 		}
 
-		// Verify the task belongs to the authenticated user
-		const existingTask = await prisma.task.findFirst({
-			where: {
-				id: taskId,
-				list: {
-					userId: userId,
-				},
-			},
-		});
-
-		if (!existingTask) {
-			return new NextResponse("Task not found or unauthorized", {
-				status: 404,
-			});
-		}
-
-		// Delete the task
-		await prisma.task.delete({
-			where: {
-				id: taskId,
-			},
-		});
-
-		return new NextResponse("Task deleted successfully", { status: 200 });
+		await DatabaseService.deleteTask(taskId, userId);
+		
+		return ApiResponseHandler.success({ message: "Task deleted successfully" });
 	} catch (error) {
 		console.error("Error deleting task:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error(error as Error);
 	}
 }

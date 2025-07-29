@@ -101,7 +101,7 @@ export default async function Page({
 		: null;
 
 	// Transform data for TaskTable
-	const tasksForTable = userTasks.map((task) => ({
+	const tasksForTable = userTasks.map((task: any) => ({
 		id: task.id,
 		title: task.title,
 		description: task.description || undefined,
@@ -114,7 +114,7 @@ export default async function Page({
 
 	// Calculate stats
 	const totalTasks = userTasks.length;
-	const completedTasks = userTasks.filter((task) => task.completed).length;
+	const completedTasks = userTasks.filter((task: any) => task.completed).length;
 	const totalLists = userLists.length;
 	return (
 		<SidebarProvider>

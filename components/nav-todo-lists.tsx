@@ -27,7 +27,7 @@ import {
 	SidebarMenuSubButton,
 	SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Task } from "@/lib/generated/prisma"; // Import Prisma Task type
+import { Task } from "@/lib/types"; // Import Task type from our types file
 
 interface TodoList {
 	id: string;
