@@ -124,8 +124,9 @@ export function CreateDialog({
 		try {
 			const response = await fetch("/api/lists");
 			if (response.ok) {
-				const lists = await response.json();
-				setAvailableLists(lists);
+				const result = await response.json();
+				// API returns { success: true, data: [...] }
+				setAvailableLists(result.data || []);
 			}
 		} catch (error) {
 			console.error("Error fetching lists:", error);
@@ -226,6 +227,7 @@ export function CreateDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
+			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 			<DialogContent className="overflow-hidden p-0 md:max-h-[600px] md:max-w-[700px] lg:max-w-[800px]">
 				<DialogTitle className="sr-only">
 					Create {activeMode === "task" ? "Task" : "List"}
@@ -420,8 +422,9 @@ export function EditTaskDialog({
 		try {
 			const response = await fetch("/api/lists");
 			if (response.ok) {
-				const lists = await response.json();
-				setAvailableLists(lists);
+				const result = await response.json();
+				// API returns { success: true, data: [...] }
+				setAvailableLists(result.data || []);
 			}
 		} catch (error) {
 			console.error("Error fetching lists:", error);

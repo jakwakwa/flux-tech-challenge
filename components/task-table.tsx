@@ -366,7 +366,6 @@ export function TaskTable({
 						</div>
 					</div>
 				</div>
-				{createDialog}
 			</div>
 
 			{/* Search and filters */}
@@ -410,6 +409,11 @@ export function TaskTable({
 				<Badge variant="secondary" className="ml-auto">
 					{table.getFilteredRowModel().rows.length} tasks
 				</Badge>
+				
+				{/* Create Task Button */}
+				<div className="ml-2">
+					{createDialog}
+				</div>
 			</div>
 
 			{/* Table */}
