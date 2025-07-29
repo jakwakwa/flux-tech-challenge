@@ -96,6 +96,7 @@ export function CreateDialog({
 
 	// List form state
 	const [listTitle, setListTitle] = React.useState("");
+	const [listError, setListError] = React.useState<string | null>(null);
 
 	// Available lists (this could come from props or a hook)
 	const [availableLists, setAvailableLists] = React.useState<TodoList[]>([]);
@@ -118,6 +119,13 @@ export function CreateDialog({
 			fetchLists();
 		}
 	}, [open, activeMode, fetchLists]);
+
+	// Clear errors when dialog closes or mode changes
+	React.useEffect(() => {
+		if (!open || activeMode !== "list") {
+			setListError(null);
+		}
+	}, [open, activeMode]);
 
 	const handleCreateTask = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -160,6 +168,7 @@ export function CreateDialog({
 		if (!listTitle.trim()) return;
 
 		setIsLoading(true);
+		setListError(null); // Clear any previous errors
 		try {
 			const response = await fetch("/api/lists", {
 				method: "POST",
@@ -174,14 +183,23 @@ export function CreateDialog({
 			if (response.ok) {
 				// Reset form
 				setListTitle("");
+				setListError(null);
 				setOpen(false);
 				router.refresh();
 			} else {
 				const errorText = await response.text();
 				console.error("Failed to create list:", response.status, errorText);
+
+				// Show user-friendly error message
+				if (response.status === 429) {
+					setListError(errorText);
+				} else {
+					setListError("Failed to create list. Please try again.");
+				}
 			}
 		} catch (error) {
 			console.error("Error creating list:", error);
+			setListError("An unexpected error occurred. Please try again.");
 		} finally {
 			setIsLoading(false);
 		}
@@ -323,6 +341,9 @@ export function CreateDialog({
 											onChange={(e) => setListTitle(e.target.value)}
 											required
 										/>
+										{listError && (
+											<p className="text-sm text-red-600 mt-2">{listError}</p>
+										)}
 									</div>
 
 									<div className="bg-muted/50 p-4 rounded-lg">

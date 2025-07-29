@@ -9,6 +9,7 @@ import {
 	BreadcrumbItem,
 	BreadcrumbList,
 	BreadcrumbPage,
+	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -89,6 +90,16 @@ export default async function Page({
 		},
 	});
 
+	// Fetch the selected list if listId is provided
+	const selectedList = listId
+		? await prisma.list.findFirst({
+				where: {
+					id: listId,
+					userId: userId,
+				},
+			})
+		: null;
+
 	// Transform data for TaskTable
 	const tasksForTable = userTasks.map((task) => ({
 		id: task.id,
@@ -120,10 +131,20 @@ export default async function Page({
 										Dashboard
 									</BreadcrumbPage>
 								</BreadcrumbItem>
+								{selectedList && (
+									<>
+										<BreadcrumbSeparator />
+										<BreadcrumbItem>
+											<BreadcrumbPage className="line-clamp-1">
+												{selectedList.title}
+											</BreadcrumbPage>
+										</BreadcrumbItem>
+									</>
+								)}
 							</BreadcrumbList>
 						</Breadcrumb>
 					</div>
-					<div className="ml-auto px-3">
+					<div className="ml-auto flex items-center gap-3 px-3">
 						<NavActions />
 					</div>
 				</header>
@@ -134,6 +155,7 @@ export default async function Page({
 						<h1 className="text-2xl font-bold">
 							Welcome back, {user?.firstName || "User"}! 👋
 						</h1>
+						<h2>List:</h2>
 						<p className="text-muted-foreground">
 							Here's what's happening with your tasks today.
 						</p>

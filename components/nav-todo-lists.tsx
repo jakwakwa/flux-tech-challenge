@@ -99,7 +99,7 @@ export function NavTodoLists({ todoLists }: NavTodoListsProps) {
 									{list.tasks.slice(0, 5).map((task) => (
 										<SidebarMenuSubItem key={task.id}>
 											<SidebarMenuSubButton asChild>
-												<Link href={`${list.url}/task/${task.id}`}>
+												<Link href={`/tasks/${task.id}`}>
 													<span
 														className={`mr-2 text-xs ${
 															task.completed

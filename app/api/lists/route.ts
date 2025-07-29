@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { APP_LIMITS, LIMIT_ERRORS } from "@/lib/constants";
 import prisma from "@/lib/prisma";
 
 export async function GET() {
@@ -57,6 +58,19 @@ export async function POST(request: Request) {
 
 		if (!title || title.trim().length === 0) {
 			return new NextResponse("Title is required", { status: 400 });
+		}
+
+		// Check if user has reached the maximum number of lists
+		const existingListsCount = await prisma.list.count({
+			where: {
+				userId: userId,
+			},
+		});
+
+		if (existingListsCount >= APP_LIMITS.MAX_LISTS_PER_USER) {
+			return new NextResponse(LIMIT_ERRORS.MAX_LISTS_EXCEEDED, {
+				status: 429, // Too Many Requests
+			});
 		}
 
 		// Create the list

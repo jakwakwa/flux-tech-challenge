@@ -92,21 +92,10 @@ export async function AppSidebar({
 
 	const navMain = [
 		{
-			title: "Dashboard",
+			title: "All Tasks",
 			url: "/dashboard",
 			icon: "Home" as const,
 			isActive: true,
-		},
-		{
-			title: "Search Tasks",
-			url: "/search",
-			icon: "Search" as const,
-		},
-		{
-			title: "All Tasks",
-			url: "/tasks",
-			icon: "CheckSquare" as const,
-			badge: totalTaskCount > 0 ? totalTaskCount.toString() : undefined,
 		},
 		{
 			title: "Create List",
