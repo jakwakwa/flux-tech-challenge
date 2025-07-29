@@ -217,7 +217,7 @@ export default async function Page({
 
 					{/* Task Table */}
 					<div className="space-y-4">
-						<TaskTableClient initialTasks={tasksForTable} />
+						<TaskTableClient initialTasks={tasksForTable} hasLists={userLists.length > 0} />
 					</div>
 				</div>
 			</SidebarInset>

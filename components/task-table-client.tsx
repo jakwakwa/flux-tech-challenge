@@ -9,9 +9,10 @@ import { type Task, TaskTable } from "./task-table";
 
 interface TaskTableClientProps {
 	initialTasks: Task[];
+	hasLists: boolean;
 }
 
-export function TaskTableClient({ initialTasks }: TaskTableClientProps) {
+export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps) {
 	const router = useRouter();
 	const [tasks, setTasks] = useState(initialTasks);
 	const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -107,7 +108,9 @@ export function TaskTableClient({ initialTasks }: TaskTableClientProps) {
 				onTaskDelete={handleTaskDelete}
 				onTaskEdit={handleTaskEdit}
 				createDialog={
-					<CreateDialog defaultMode="task" trigger={createTaskTrigger} />
+					hasLists ? (
+						<CreateDialog defaultMode="task" trigger={createTaskTrigger} />
+					) : null
 				}
 			/>
 			{editingTask && (
