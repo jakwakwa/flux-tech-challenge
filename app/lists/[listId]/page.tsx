@@ -94,8 +94,13 @@ export default async function ListPage({ params }: ListPageProps) {
 	const completedTasks = list.tasks.filter((task) => task.completed).length;
 	const pendingTasks = totalTasks - completedTasks;
 
-	// Create task button for the TaskTable - this will be handled by the TaskTable component
-	const createTaskButton = null;
+	// Create task button for the TaskTable
+	const createTaskButton = (
+		<Button size="sm">
+			<Plus className="h-4 w-4 mr-2" />
+			Add Task
+		</Button>
+	);
 
 	return (
 		<SidebarProvider>
