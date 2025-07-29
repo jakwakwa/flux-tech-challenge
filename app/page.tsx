@@ -3,14 +3,19 @@ import { auth } from "@clerk/nextjs/server";
 import { CheckCircle, List, Search, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 export default async function Home() {
 	const { userId } = await auth();
 
 	// If user is signed in, redirect to dashboard
 	if (userId) {
-		redirect('/dashboard');
+		redirect("/dashboard");
 	}
 
 	return (
@@ -20,11 +25,12 @@ export default async function Home() {
 				<div className="max-w-4xl mx-auto text-center space-y-8">
 					<div className="space-y-4">
 						<h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-							Your Todo Lists, 
+							Your Todo Lists,
 							<span className="text-primary"> Simplified</span>
 						</h1>
 						<p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-							Organize your tasks, track your progress, and get things done with our intuitive todo list application.
+							Organize your tasks, track your progress, and get things done with
+							our intuitive todo list application.
 						</p>
 					</div>
 
@@ -51,7 +57,8 @@ export default async function Home() {
 								</div>
 								<CardTitle>Organize Lists</CardTitle>
 								<CardDescription>
-									Create multiple lists to organize your tasks by project, priority, or any way you prefer.
+									Create multiple lists to organize your tasks by project,
+									priority, or any way you prefer.
 								</CardDescription>
 							</CardHeader>
 						</Card>
@@ -63,7 +70,8 @@ export default async function Home() {
 								</div>
 								<CardTitle>Track Progress</CardTitle>
 								<CardDescription>
-									Mark tasks as complete and watch your progress with visual indicators and statistics.
+									Mark tasks as complete and watch your progress with visual
+									indicators and statistics.
 								</CardDescription>
 							</CardHeader>
 						</Card>
@@ -75,7 +83,8 @@ export default async function Home() {
 								</div>
 								<CardTitle>Find Tasks Fast</CardTitle>
 								<CardDescription>
-									Search through all your tasks quickly and filter by completion status or list.
+									Search through all your tasks quickly and filter by completion
+									status or list.
 								</CardDescription>
 							</CardHeader>
 						</Card>

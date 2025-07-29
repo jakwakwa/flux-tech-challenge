@@ -14,9 +14,13 @@ import {
 } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
 	Calendar,
 	CheckCircle2,
 	Circle,
+	Filter,
 	Flag,
 	MoreHorizontal,
 	Plus,
@@ -34,6 +38,13 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
@@ -72,6 +83,7 @@ const createColumns = (
 	{
 		id: "status",
 		header: "Status",
+		accessorKey: "completed",
 		size: 80,
 		minSize: 60,
 		maxSize: 100,
@@ -97,7 +109,17 @@ const createColumns = (
 				</Button>
 			);
 		},
-		enableSorting: false,
+		filterFn: (row, id, value) => {
+			if (value === "all") return true;
+			if (value === "completed") return row.original.completed;
+			return true;
+		},
+		enableSorting: true,
+		sortingFn: (rowA, rowB) => {
+			const a = rowA.original.completed;
+			const b = rowB.original.completed;
+			return a === b ? 0 : a ? 1 : -1;
+		},
 	},
 	{
 		accessorKey: "title",
@@ -142,12 +164,65 @@ const createColumns = (
 	},
 	{
 		accessorKey: "createdAt",
-		header: "Created",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="h-8 p-0 hover:bg-transparent"
+				>
+					Created
+					{column.getIsSorted() === "asc" ? (
+						<ArrowUp className="ml-2 h-4 w-4" />
+					) : column.getIsSorted() === "desc" ? (
+						<ArrowDown className="ml-2 h-4 w-4" />
+					) : (
+						<ArrowUpDown className="ml-2 h-4 w-4" />
+					)}
+				</Button>
+			);
+		},
 		cell: ({ row }) => (
 			<div className="text-sm text-muted-foreground">
 				{format(new Date(row.original.createdAt), "MMM dd, yyyy")}
 			</div>
 		),
+		sortingFn: (rowA, rowB) => {
+			const a = new Date(rowA.original.createdAt).getTime();
+			const b = new Date(rowB.original.createdAt).getTime();
+			return a - b;
+		},
+	},
+	{
+		accessorKey: "updatedAt",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="h-8 p-0 hover:bg-transparent"
+				>
+					Updated
+					{column.getIsSorted() === "asc" ? (
+						<ArrowUp className="ml-2 h-4 w-4" />
+					) : column.getIsSorted() === "desc" ? (
+						<ArrowDown className="ml-2 h-4 w-4" />
+					) : (
+						<ArrowUpDown className="ml-2 h-4 w-4" />
+					)}
+				</Button>
+			);
+		},
+		cell: ({ row }) => (
+			<div className="text-sm text-muted-foreground">
+				{format(new Date(row.original.updatedAt), "MMM dd, yyyy")}
+			</div>
+		),
+		sortingFn: (rowA, rowB) => {
+			const a = new Date(rowA.original.updatedAt).getTime();
+			const b = new Date(rowB.original.updatedAt).getTime();
+			return a - b;
+		},
 	},
 	{
 		id: "actions",
@@ -202,6 +277,7 @@ export function TaskTable({
 	);
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = React.useState("");
+	const [statusFilter, setStatusFilter] = React.useState<string>("all");
 
 	const columns = React.useMemo(
 		() => createColumns(onTaskUpdate, onTaskDelete, onTaskEdit),
@@ -238,8 +314,37 @@ export function TaskTable({
 		},
 	});
 
+	// Handle status filter changes
+	React.useEffect(() => {
+		if (statusFilter === "all") {
+			table.getColumn("status")?.setFilterValue(undefined);
+		} else {
+			table.getColumn("status")?.setFilterValue(statusFilter);
+		}
+	}, [statusFilter, table]);
+
 	const completedTasks = tasks.filter((task) => task.completed).length;
 	const totalTasks = tasks.length;
+
+	// Quick sort handlers
+	const handleQuickSort = (sortType: string) => {
+		switch (sortType) {
+			case "newest":
+				setSorting([{ id: "createdAt", desc: true }]);
+				break;
+			case "oldest":
+				setSorting([{ id: "createdAt", desc: false }]);
+				break;
+			case "updated":
+				setSorting([{ id: "updatedAt", desc: true }]);
+				break;
+			case "status":
+				setSorting([{ id: "status", desc: false }]);
+				break;
+			default:
+				setSorting([]);
+		}
+	};
 
 	return (
 		<div className="space-y-4">
@@ -265,7 +370,7 @@ export function TaskTable({
 			</div>
 
 			{/* Search and filters */}
-			<div className="flex items-center gap-2">
+			<div className="flex items-center gap-2 flex-wrap">
 				<div className="relative flex-1 max-w-sm">
 					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 					<Input
@@ -275,6 +380,33 @@ export function TaskTable({
 						className="pl-9"
 					/>
 				</div>
+
+				{/* Status Filter */}
+				<Select value={statusFilter} onValueChange={setStatusFilter}>
+					<SelectTrigger className="w-32">
+						<Filter className="mr-2 h-4 w-4" />
+						<SelectValue placeholder="Status" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">All Tasks</SelectItem>
+						<SelectItem value="completed">Completed</SelectItem>
+					</SelectContent>
+				</Select>
+
+				{/* Sort Options */}
+				<Select onValueChange={handleQuickSort}>
+					<SelectTrigger className="w-40">
+						<Calendar className="mr-2 h-4 w-4" />
+						<SelectValue placeholder="Sort by" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="newest">Newest First</SelectItem>
+						<SelectItem value="oldest">Oldest First</SelectItem>
+						<SelectItem value="updated">Recently Updated</SelectItem>
+						<SelectItem value="status">By Status</SelectItem>
+					</SelectContent>
+				</Select>
+
 				<Badge variant="secondary" className="ml-auto">
 					{table.getFilteredRowModel().rows.length} tasks
 				</Badge>
