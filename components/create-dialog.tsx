@@ -44,6 +44,8 @@ import { Textarea } from "./ui/textarea";
 interface CreateDialogProps {
 	trigger?: React.ReactNode;
 	defaultMode?: "task" | "list";
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
 interface EditTaskDialogProps {
@@ -56,6 +58,17 @@ interface EditTaskDialogProps {
 		listName: string;
 	};
 	onTaskUpdate?: (taskId: string, updates: any) => void;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+}
+
+interface EditListDialogProps {
+	trigger?: React.ReactNode;
+	list: {
+		id: string;
+		title: string;
+	};
+	onListUpdate?: (listId: string, updates: any) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
@@ -81,8 +94,14 @@ const navigationData = [
 export function CreateDialog({
 	trigger,
 	defaultMode = "task",
+	open: externalOpen,
+	onOpenChange: externalOnOpenChange,
 }: CreateDialogProps) {
-	const [open, setOpen] = React.useState(false);
+	const [internalOpen, setInternalOpen] = React.useState(false);
+
+	// Use external open state if provided, otherwise use internal state
+	const open = externalOpen !== undefined ? externalOpen : internalOpen;
+	const setOpen = externalOnOpenChange || setInternalOpen;
 	const [activeMode, setActiveMode] = React.useState<"task" | "list">(
 		defaultMode,
 	);
@@ -568,6 +587,128 @@ export function EditTaskDialog({
 						</form>
 					</div>
 				</main>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+export function EditListDialog({
+	trigger,
+	list,
+	onListUpdate,
+	open: externalOpen,
+	onOpenChange: externalOnOpenChange,
+}: EditListDialogProps) {
+	const [internalOpen, setInternalOpen] = React.useState(false);
+	const [isLoading, setIsLoading] = React.useState(false);
+	const router = useRouter();
+
+	// Use external open state if provided, otherwise use internal state
+	const open = externalOpen !== undefined ? externalOpen : internalOpen;
+	const setOpen = externalOnOpenChange || setInternalOpen;
+
+	// List form state - initialize with existing list data
+	const [listTitle, setListTitle] = React.useState(list.title);
+
+	// Reset form when list prop changes
+	React.useEffect(() => {
+		setListTitle(list.title);
+	}, [list]);
+
+	const handleUpdateList = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!listTitle.trim()) return;
+
+		setIsLoading(true);
+		try {
+			const response = await fetch("/api/lists", {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					listId: list.id,
+					title: listTitle.trim(),
+				}),
+			});
+
+			if (response.ok) {
+				const updatedList = await response.json();
+
+				// Call the callback to update parent state if provided
+				if (onListUpdate) {
+					onListUpdate(list.id, {
+						title: listTitle.trim(),
+					});
+				}
+
+				setOpen(false);
+				router.refresh();
+			} else {
+				const errorText = await response.text();
+				console.error("Failed to update list:", response.status, errorText);
+			}
+		} catch (error) {
+			console.error("Error updating list:", error);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+			<DialogContent className="max-w-2xl p-0">
+				<div className="flex h-[600px]">
+					<aside className="hidden w-52 border-r bg-sidebar p-4 md:block">
+						<div className="flex items-center gap-2">
+							<Edit className="h-4 w-4" />
+							<h3 className="font-semibold">Edit List</h3>
+						</div>
+					</aside>
+					<main className="flex flex-1 flex-col">
+						<div className="flex h-14 items-center gap-2 border-b px-6">
+							<DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+								<Edit className="h-5 w-5" />
+								Edit List
+							</DialogTitle>
+						</div>
+						<DialogDescription className="sr-only">
+							Edit your list details
+						</DialogDescription>
+
+						<div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+							<form onSubmit={handleUpdateList} className="space-y-6">
+								<div className="space-y-2">
+									<Label htmlFor="edit-list-title">List Title *</Label>
+									<Input
+										id="edit-list-title"
+										placeholder="Enter list title..."
+										value={listTitle}
+										onChange={(e) => setListTitle(e.target.value)}
+										required
+									/>
+								</div>
+
+								<div className="flex gap-3 pt-4">
+									<Button
+										type="submit"
+										disabled={isLoading || !listTitle.trim()}
+									>
+										{isLoading ? "Updating..." : "Update List"}
+									</Button>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setOpen(false)}
+									>
+										Cancel
+									</Button>
+								</div>
+							</form>
+						</div>
+					</main>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

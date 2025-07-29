@@ -145,17 +145,24 @@ export default async function Page({
 						</Breadcrumb>
 					</div>
 					<div className="ml-auto flex items-center gap-3 px-3">
-						<NavActions />
+						<NavActions selectedList={selectedList} />
 					</div>
 				</header>
 
 				<div className="flex flex-1 flex-col gap-6 p-6">
 					{/* Welcome Section */}
 					<div className="space-y-2">
-						<h1 className="text-2xl font-bold">
-							Welcome back, {user?.firstName || "User"}! 👋
-						</h1>
-						<h2>List:</h2>
+						{selectedList ? (
+							<h1 className="text-2xl font-normal">
+								Current List:{" "}
+								<span className="font-bold">{selectedList.title}</span>
+							</h1>
+						) : (
+							<h1 className="text-2xl font-bold">Welcome back 👋</h1>
+						)}
+						<h2 className="text-xl font-bold">
+							{selectedList ? `${selectedList.title}` : "All Lists"}
+						</h2>
 						<p className="text-muted-foreground">
 							Here's what's happening with your tasks today.
 						</p>

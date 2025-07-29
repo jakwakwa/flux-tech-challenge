@@ -192,7 +192,6 @@ const createColumns = (
 						<DropdownMenuItem onClick={() => onTaskEdit?.(task)}>
 							Edit task
 						</DropdownMenuItem>
-						<DropdownMenuItem>Duplicate</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							className="text-destructive"
