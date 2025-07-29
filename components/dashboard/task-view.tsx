@@ -107,6 +107,7 @@ export function TaskView({ listId, listTitle }: TaskViewProps) {
         onTaskDelete={handleTaskDelete}
         onTaskEdit={handleTaskEdit}
         createDialog={createTaskButton}
+        title={`${listTitle} - Tasks`}
       />
     </div>
   );

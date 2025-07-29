@@ -72,6 +72,7 @@ interface TaskTableProps {
 	onTaskDelete?: (taskId: string) => void;
 	onTaskEdit?: (task: Task) => void;
 	createDialog?: React.ReactNode;
+	title?: string;
 }
 
 // Define columns for the task table
@@ -269,6 +270,7 @@ export function TaskTable({
 	onTaskDelete,
 	onTaskEdit,
 	createDialog,
+	title = "Recent Tasks",
 }: TaskTableProps) {
 	const [columnVisibility, setColumnVisibility] =
 		React.useState<VisibilityState>({});
@@ -351,7 +353,7 @@ export function TaskTable({
 			{/* Header with stats and actions */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<h2 className="text-xl font-semibold">Recent Tasks</h2>
+					<h2 className="text-xl font-semibold">{title}</h2>
 					<div className="flex items-center gap-2 text-sm text-muted-foreground">
 						<span>
 							{completedTasks}/{totalTasks} completed
