@@ -81,7 +81,7 @@ export class ApiResponseHandler {
       'Validation failed',
       'VALIDATION_ERROR',
       400,
-      error.errors.map(err => ({
+      error.issues.map(err => ({
         field: err.path.join('.'),
         message: err.message,
       }))

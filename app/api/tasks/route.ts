@@ -77,7 +77,7 @@ export async function GET(request: Request) {
 			prisma.task.count({ where }),
 		]);
 
-		return ApiResponseHandler.success<Task[]>(tasks, {
+		return ApiResponseHandler.success(tasks, {
 			page,
 			limit,
 			total,
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
 			},
 		});
 
-		return ApiResponseHandler.success<Task>(task);
+		return ApiResponseHandler.success(task);
 	} catch (error) {
 		console.error("Error creating task:", error);
 		return ApiResponseHandler.error("Failed to create task");
@@ -230,7 +230,7 @@ export async function PUT(request: Request) {
 			},
 		});
 
-		return ApiResponseHandler.success<Task>(updatedTask);
+		return ApiResponseHandler.success(updatedTask);
 	} catch (error) {
 		console.error("Error updating task:", error);
 		return ApiResponseHandler.error("Failed to update task");

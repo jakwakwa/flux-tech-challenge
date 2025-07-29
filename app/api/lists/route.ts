@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 			prisma.list.count({ where }),
 		]);
 
-		return ApiResponseHandler.success<List[]>(lists, {
+		return ApiResponseHandler.success(lists, {
 			page,
 			limit,
 			total,
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 		});
 
 		if (listCount >= APP_LIMITS.MAX_LISTS_PER_USER) {
-			return ApiResponseHandler.badRequest(LIMIT_ERRORS.MAX_LISTS_REACHED);
+			return ApiResponseHandler.badRequest(LIMIT_ERRORS.MAX_LISTS_EXCEEDED);
 		}
 
 		// Create the list
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 			},
 		});
 
-		return ApiResponseHandler.success<List>(list);
+		return ApiResponseHandler.success(list);
 	} catch (error) {
 		console.error("Error creating list:", error);
 		
@@ -181,7 +181,7 @@ export async function PUT(request: Request) {
 			},
 		});
 
-		return ApiResponseHandler.success<List>(updatedList);
+		return ApiResponseHandler.success(updatedList);
 	} catch (error) {
 		console.error("Error updating list:", error);
 		return ApiResponseHandler.error("Failed to update list");

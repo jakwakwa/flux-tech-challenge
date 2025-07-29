@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { List, ApiResponse } from '@/lib/types';
 import { CreateListInput, UpdateListInput } from '@/lib/validators';
+import { ApiErrorResponse } from '@/lib/utils/api-response';
 
 interface UseListsReturn {
   lists: List[];
@@ -25,11 +26,19 @@ export function useLists(): UseListsReturn {
       const response = await fetch('/api/lists');
       const data: ApiResponse<List[]> = await response.json();
       
-      if (!response.ok || !data.success) {
-        throw new Error(data.error?.message || 'Failed to fetch lists');
+      if (!response.ok) {
+        const errorData = data as any;
+        throw new Error(errorData?.error?.message || 'Failed to fetch lists');
       }
       
-      setLists(data.data || []);
+      const successData = data as any;
+      if (!successData.success) {
+        throw new Error('Failed to fetch lists');
+      }
+      
+      if ('data' in data) {
+        setLists(data.data || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching lists:', err);
@@ -52,12 +61,20 @@ export function useLists(): UseListsReturn {
       
       const result: ApiResponse<List> = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to create list');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to create list');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to create list');
       }
       
       // Optimistically update the local state
-      setLists(prev => [result.data!, ...prev]);
+      if ('data' in result && result.data) {
+        setLists(prev => [result.data as List, ...prev]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error creating list:', err);
@@ -79,14 +96,22 @@ export function useLists(): UseListsReturn {
       
       const result: ApiResponse<List> = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to update list');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to update list');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to update list');
       }
       
       // Update the local state
-      setLists(prev => prev.map(list => 
-        list.id === listId ? result.data! : list
-      ));
+      if ('data' in result && result.data) {
+        setLists(prev => prev.map(list => 
+          list.id === listId ? result.data as List : list
+        ));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error updating list:', err);
@@ -104,8 +129,14 @@ export function useLists(): UseListsReturn {
       
       const result: ApiResponse = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to delete list');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to delete list');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to delete list');
       }
       
       // Remove from local state

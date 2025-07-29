@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Task, ApiResponse, SearchParams } from '@/lib/types';
 import { CreateTaskInput, UpdateTaskInput } from '@/lib/validators';
+import { ApiErrorResponse } from '@/lib/utils/api-response';
 
 interface UseTasksOptions extends SearchParams {
   enabled?: boolean;
@@ -43,12 +44,21 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksReturn {
       const response = await fetch(`/api/tasks?${params}`);
       const data: ApiResponse<Task[]> = await response.json();
       
-      if (!response.ok || !data.success) {
-        throw new Error(data.error?.message || 'Failed to fetch tasks');
+      if (!response.ok) {
+        const errorData = data as any;
+        throw new Error(errorData?.error?.message || 'Failed to fetch tasks');
       }
       
-      setTasks(data.data || []);
-      setTotalPages(data.meta?.totalPages || 0);
+      const successData = data as any;
+      if (!successData.success) {
+        throw new Error('Failed to fetch tasks');
+      }
+      
+      if ('data' in data) {
+        setTasks(data.data || []);
+        const successData = data as any;
+        setTotalPages(successData.meta?.totalPages || 0);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching tasks:', err);
@@ -71,13 +81,21 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksReturn {
       
       const result: ApiResponse<Task> = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to create task');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to create task');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to create task');
       }
       
       // If the new task matches current filters, add it to the list
-      if (!searchParams.listId || searchParams.listId === data.listId) {
-        setTasks(prev => [result.data!, ...prev]);
+      if ('data' in result && result.data) {
+        if (!searchParams.listId || searchParams.listId === data.listId) {
+          setTasks(prev => [result.data as Task, ...prev]);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -100,14 +118,22 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksReturn {
       
       const result: ApiResponse<Task> = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to update task');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to update task');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to update task');
       }
       
       // Update the local state
-      setTasks(prev => prev.map(task => 
-        task.id === taskId ? result.data! : task
-      ));
+      if ('data' in result && result.data) {
+        setTasks(prev => prev.map(task => 
+          task.id === taskId ? result.data as Task : task
+        ));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error updating task:', err);
@@ -125,8 +151,14 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksReturn {
       
       const result: ApiResponse = await response.json();
       
-      if (!response.ok || !result.success) {
-        throw new Error(result.error?.message || 'Failed to delete task');
+      if (!response.ok) {
+        const errorData = result as any;
+        throw new Error(errorData?.error?.message || 'Failed to delete task');
+      }
+      
+      const successData = result as any;
+      if (!successData.success) {
+        throw new Error('Failed to delete task');
       }
       
       // Remove from local state
