@@ -1,200 +1,229 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { APP_LIMITS, LIMIT_ERRORS } from "@/lib/constants";
 import prisma from "@/lib/prisma";
+import { ApiResponseHandler } from "@/lib/utils/api-response";
+import { createListSchema, updateListSchema, searchSchema } from "@/lib/validators";
+import { List } from "@/lib/types";
 
-export async function GET() {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
+export async function GET(request: Request) {
 	try {
-		// Fetch lists for the authenticated user
-		const lists = await prisma.list.findMany({
-			where: {
-				userId: userId,
-			},
-			include: {
-				tasks: {
-					orderBy: {
-						createdAt: "desc",
-					},
-				},
-			},
-			orderBy: {
-				createdAt: "desc",
-			},
+		const { userId } = await auth();
+
+		if (!userId) {
+			return ApiResponseHandler.unauthorized();
+		}
+
+		// Parse and validate query parameters
+		const { searchParams } = new URL(request.url);
+		const queryResult = searchSchema.safeParse({
+			page: searchParams.get('page'),
+			limit: searchParams.get('limit'),
+			sortBy: searchParams.get('sortBy'),
+			sortOrder: searchParams.get('sortOrder'),
+			query: searchParams.get('query'),
 		});
 
-		return NextResponse.json(lists, { status: 200 });
+		if (!queryResult.success) {
+			return ApiResponseHandler.validationError(queryResult.error);
+		}
+
+		const { page, limit, sortBy, sortOrder, query } = queryResult.data;
+		const skip = (page - 1) * limit;
+
+		// Build where clause
+		const where = {
+			userId,
+			...(query && {
+				title: {
+					contains: query,
+					mode: 'insensitive' as const,
+				},
+			}),
+		};
+
+		// Execute queries in parallel for better performance
+		const [lists, total] = await Promise.all([
+			prisma.list.findMany({
+				where,
+				include: {
+					tasks: {
+						orderBy: {
+							createdAt: "desc",
+						},
+					},
+				},
+				orderBy: {
+					[sortBy]: sortOrder,
+				},
+				skip,
+				take: limit,
+			}),
+			prisma.list.count({ where }),
+		]);
+
+		return ApiResponseHandler.success<List[]>(lists, {
+			page,
+			limit,
+			total,
+			totalPages: Math.ceil(total / limit),
+		});
 	} catch (error) {
 		console.error("Error fetching lists:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error("Failed to fetch lists");
 	}
 }
 
 export async function POST(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
-	// Ensure user exists in database (create if not exists)
-	await prisma.user.upsert({
-		where: { id: userId },
-		update: {},
-		create: {
-			id: userId,
-			email: "", // We don't have access to user details in this API route
-		},
-	});
-
 	try {
-		const body = await request.json();
-		const { title } = body;
+		const { userId } = await auth();
 
-		if (!title || title.trim().length === 0) {
-			return new NextResponse("Title is required", { status: 400 });
+		if (!userId) {
+			return ApiResponseHandler.unauthorized();
 		}
 
-		// Check if user has reached the maximum number of lists
-		const existingListsCount = await prisma.list.count({
-			where: {
-				userId: userId,
+		// Parse and validate request body
+		const body = await request.json();
+		const validationResult = createListSchema.safeParse(body);
+
+		if (!validationResult.success) {
+			return ApiResponseHandler.validationError(validationResult.error);
+		}
+
+		const { title } = validationResult.data;
+
+		// Ensure user exists in database (create if not exists)
+		await prisma.user.upsert({
+			where: { id: userId },
+			update: {},
+			create: {
+				id: userId,
+				email: "", // This will be updated from Clerk data
 			},
 		});
 
-		if (existingListsCount >= APP_LIMITS.MAX_LISTS_PER_USER) {
-			return new NextResponse(LIMIT_ERRORS.MAX_LISTS_EXCEEDED, {
-				status: 429, // Too Many Requests
-			});
+		// Check if user has reached list limit
+		const listCount = await prisma.list.count({
+			where: { userId },
+		});
+
+		if (listCount >= APP_LIMITS.MAX_LISTS_PER_USER) {
+			return ApiResponseHandler.badRequest(LIMIT_ERRORS.MAX_LISTS_REACHED);
 		}
 
 		// Create the list
 		const list = await prisma.list.create({
 			data: {
-				title: title.trim(),
-				userId: userId,
+				title,
+				userId,
 			},
 			include: {
 				tasks: true,
 			},
 		});
 
-		return NextResponse.json(list, { status: 201 });
+		return ApiResponseHandler.success<List>(list);
 	} catch (error) {
 		console.error("Error creating list:", error);
-
-		// Enhanced error reporting for better debugging
-		if (error instanceof Error) {
-			return new NextResponse(`Internal Server Error: ${error.message}`, {
-				status: 500,
-			});
+		
+		// Handle specific Prisma errors
+		if (error instanceof Error && error.message.includes('P2002')) {
+			return ApiResponseHandler.conflict("A list with this title already exists");
 		}
-
-		return new NextResponse("Internal Server Error", { status: 500 });
+		
+		return ApiResponseHandler.error("Failed to create list");
 	}
 }
 
-export async function PATCH(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
+export async function PUT(request: Request) {
 	try {
-		const body = await request.json();
-		const { listId, title } = body;
+		const { userId } = await auth();
 
-		if (!listId) {
-			return new NextResponse("List ID is required", { status: 400 });
+		if (!userId) {
+			return ApiResponseHandler.unauthorized();
 		}
 
-		if (!title || title.trim().length === 0) {
-			return new NextResponse("Title is required", { status: 400 });
-		}
-
-		// Verify the list belongs to the authenticated user
-		const existingList = await prisma.list.findFirst({
-			where: {
-				id: listId,
-				userId: userId,
-			},
-		});
-
-		if (!existingList) {
-			return new NextResponse("List not found or unauthorized", {
-				status: 404,
-			});
-		}
-
-		// Update the list
-		const updatedList = await prisma.list.update({
-			where: {
-				id: listId,
-			},
-			data: {
-				title: title.trim(),
-			},
-			include: {
-				tasks: {
-					orderBy: {
-						createdAt: "desc",
-					},
-				},
-			},
-		});
-
-		return NextResponse.json(updatedList, { status: 200 });
-	} catch (error) {
-		console.error("Error updating list:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
-	}
-}
-
-export async function DELETE(request: Request) {
-	const { userId } = await auth();
-
-	if (!userId) {
-		return new NextResponse("Unauthorized", { status: 401 });
-	}
-
-	try {
+		// Get list ID from URL
 		const { searchParams } = new URL(request.url);
 		const listId = searchParams.get("listId");
 
 		if (!listId) {
-			return new NextResponse("List ID is required", { status: 400 });
+			return ApiResponseHandler.badRequest("List ID is required");
 		}
 
-		// Verify the list belongs to the authenticated user
+		// Parse and validate request body
+		const body = await request.json();
+		const validationResult = updateListSchema.safeParse(body);
+
+		if (!validationResult.success) {
+			return ApiResponseHandler.validationError(validationResult.error);
+		}
+
+		const { title } = validationResult.data;
+
+		// Check if the list exists and belongs to the user
 		const existingList = await prisma.list.findFirst({
 			where: {
 				id: listId,
-				userId: userId,
+				userId,
 			},
 		});
 
 		if (!existingList) {
-			return new NextResponse("List not found or unauthorized", {
-				status: 404,
-			});
+			return ApiResponseHandler.notFound("List");
 		}
 
-		// Delete the list (tasks will be cascade deleted due to schema)
-		await prisma.list.delete({
-			where: {
-				id: listId,
+		// Update the list
+		const updatedList = await prisma.list.update({
+			where: { id: listId },
+			data: { title },
+			include: {
+				tasks: true,
 			},
 		});
 
-		return new NextResponse("List deleted successfully", { status: 200 });
+		return ApiResponseHandler.success<List>(updatedList);
+	} catch (error) {
+		console.error("Error updating list:", error);
+		return ApiResponseHandler.error("Failed to update list");
+	}
+}
+
+export async function DELETE(request: Request) {
+	try {
+		const { userId } = await auth();
+
+		if (!userId) {
+			return ApiResponseHandler.unauthorized();
+		}
+
+		// Get list ID from URL
+		const { searchParams } = new URL(request.url);
+		const listId = searchParams.get("listId");
+
+		if (!listId) {
+			return ApiResponseHandler.badRequest("List ID is required");
+		}
+
+		// Check if the list exists and belongs to the user
+		const existingList = await prisma.list.findFirst({
+			where: {
+				id: listId,
+				userId,
+			},
+		});
+
+		if (!existingList) {
+			return ApiResponseHandler.notFound("List");
+		}
+
+		// Delete the list (tasks will be cascade deleted)
+		await prisma.list.delete({
+			where: { id: listId },
+		});
+
+		return ApiResponseHandler.success({ message: "List deleted successfully" });
 	} catch (error) {
 		console.error("Error deleting list:", error);
-		return new NextResponse("Internal Server Error", { status: 500 });
+		return ApiResponseHandler.error("Failed to delete list");
 	}
 }
