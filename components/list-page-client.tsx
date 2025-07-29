@@ -1,0 +1,117 @@
+'use client';
+
+import { useMemo } from 'react';
+import { useTaskStore } from '@/lib/store/use-task-store';
+import { TaskTable } from '@/components/task-table';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreateDialog } from '@/components/create-dialog';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+
+interface ListPageClientProps {
+  listId: string;
+  listTitle: string;
+}
+
+export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
+  const { tasks } = useTaskStore();
+
+  // Filter tasks for this specific list from the store
+  const listTasks = useMemo(() => {
+    return tasks.filter(task => task.listId === listId);
+  }, [tasks, listId]);
+
+  // Transform tasks for TaskTable
+  const tasksForTable = listTasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    description: task.description || undefined,
+    completed: task.completed,
+    listId: task.listId,
+    listName: listTitle,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+  }));
+
+  // Calculate task stats for this list
+  const totalTasks = listTasks.length;
+  const completedTasks = listTasks.filter((task) => task.completed).length;
+  const pendingTasks = totalTasks - completedTasks;
+
+  // Create task button for the TaskTable
+  const createTaskButton = (
+    <CreateDialog
+      defaultMode="task"
+      trigger={
+        <Button size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Task
+        </Button>
+      }
+    />
+  );
+
+  return (
+    <>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Tasks
+            </CardTitle>
+            <Badge variant="secondary">{totalTasks}</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalTasks}</div>
+            <p className="text-xs text-muted-foreground">
+              Tasks in this list
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Pending Tasks
+            </CardTitle>
+            <Badge variant="secondary">{pendingTasks}</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingTasks}</div>
+            <p className="text-xs text-muted-foreground">Tasks to complete</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800"
+            >
+              {totalTasks > 0
+                ? Math.round((completedTasks / totalTasks) * 100)
+                : 0}
+              %
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{completedTasks}</div>
+            <p className="text-xs text-muted-foreground">Tasks completed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Task Table */}
+      <div className="space-y-4">
+        <TaskTable
+          tasks={tasksForTable}
+          title={`${listTitle} - Tasks`}
+          createDialog={createTaskButton}
+        />
+      </div>
+    </>
+  );
+}

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateDialog } from "@/components/create-dialog";
 import { StoreInitializer } from "@/components/store-initializer";
+import { ListPageClient } from "@/components/list-page-client";
 import prisma from "@/lib/prisma";
 
 interface ListPageProps {
@@ -92,35 +93,7 @@ export default async function ListPage({ params }: ListPageProps) {
 		},
 	});
 
-	// Transform tasks for TaskTable
-	const tasksForTable = list.tasks.map((task) => ({
-		id: task.id,
-		title: task.title,
-		description: task.description || undefined,
-		completed: task.completed,
-		listId: task.listId,
-		listName: list.title,
-		createdAt: task.createdAt,
-		updatedAt: task.updatedAt,
-	}));
-
-	// Calculate task stats for this list
-	const totalTasks = list.tasks.length;
-	const completedTasks = list.tasks.filter((task) => task.completed).length;
-	const pendingTasks = totalTasks - completedTasks;
-
-	// Create task button for the TaskTable
-	const createTaskButton = (
-		<CreateDialog
-			defaultMode="task"
-			trigger={
-				<Button size="sm">
-					<Plus className="h-4 w-4 mr-2" />
-					Add Task
-				</Button>
-			}
-		/>
-	);
+	// Tasks will be displayed reactively from the client component
 
 	return (
 		<SidebarProvider>
@@ -163,64 +136,8 @@ export default async function ListPage({ params }: ListPageProps) {
 						</p>
 					</div>
 
-					{/* Stats Cards */}
-					<div className="grid gap-4 md:grid-cols-3">
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Total Tasks
-								</CardTitle>
-								<Badge variant="secondary">{totalTasks}</Badge>
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">{totalTasks}</div>
-								<p className="text-xs text-muted-foreground">
-									Tasks in this list
-								</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">
-									Pending Tasks
-								</CardTitle>
-								<Badge variant="secondary">{pendingTasks}</Badge>
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">{pendingTasks}</div>
-								<p className="text-xs text-muted-foreground">Tasks to complete</p>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-								<CardTitle className="text-sm font-medium">Completed</CardTitle>
-								<Badge
-									variant="secondary"
-									className="bg-green-100 text-green-800"
-								>
-									{totalTasks > 0
-										? Math.round((completedTasks / totalTasks) * 100)
-										: 0}
-									%
-								</Badge>
-							</CardHeader>
-							<CardContent>
-								<div className="text-2xl font-bold">{completedTasks}</div>
-								<p className="text-xs text-muted-foreground">Tasks completed</p>
-							</CardContent>
-						</Card>
-					</div>
-
-					{/* Task Table */}
-					<div className="space-y-4">
-						<TaskTable
-							tasks={tasksForTable}
-							title={`${list.title} - Tasks`}
-							createDialog={createTaskButton}
-						/>
-					</div>
+					{/* Client component that reactively displays tasks from store */}
+					<ListPageClient listId={list.id} listTitle={list.title} />
 				</div>
 			</SidebarInset>
 		</SidebarProvider>
