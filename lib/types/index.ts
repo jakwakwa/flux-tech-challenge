@@ -71,6 +71,13 @@ export interface SearchParams extends PaginationParams {
   completed?: boolean;
 }
 
+export interface SearchFilters {
+  listId?: string;
+  completed?: boolean;
+  sortBy?: 'createdAt' | 'updatedAt' | 'title' | 'completed';
+  sortOrder?: 'asc' | 'desc';
+}
+
 // UI Component Types
 export interface TaskTableData {
   id: string;
