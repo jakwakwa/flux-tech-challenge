@@ -62,23 +62,37 @@ interface NavTodoListsClientProps {
 }
 
 export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
-  const { lists, deleteList, isDeleting } = useListStore();
-  const { addToast } = useUIStore();
   const pathname = usePathname();
+  const { addToast } = useUIStore();
   const [editingList, setEditingList] = useState<{ id: string; title: string } | null>(null);
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState<string | null>(null);
 
-  // Use store lists if available, fallback to initial lists
-  const displayLists = lists.length > 0 ? lists : initialLists;
-
-  // Determine which actions are available based on current route
+  // Determine which operations are possible based on current route
   const isDashboard = pathname === "/dashboard";
   const isListPage = pathname.startsWith("/lists/");
   const currentListId = isListPage ? pathname.split('/')[2] : null;
 
-  const handleDeleteList = async (id: string, title: string) => {
+  // Only import deletion logic when on dashboard (where deletions can happen)
+  const { lists: dashboardLists, deleteList, isDeleting } = isDashboard 
+    ? useListStore() 
+    : { lists: [], deleteList: null, isDeleting: {} as Record<string, boolean> };
+
+  // Only import update logic when on list pages (where updates can happen)  
+  const { lists: listPageLists } = isListPage 
+    ? useListStore() 
+    : { lists: [] };
+
+  // Use appropriate store data based on route
+  const displayLists = isDashboard 
+    ? (dashboardLists.length > 0 ? dashboardLists : initialLists)
+    : isListPage 
+    ? (listPageLists.length > 0 ? listPageLists : initialLists)
+    : initialLists;
+
+  // Only define delete handler when on dashboard
+  const handleDeleteList = isDashboard ? async (id: string, title: string) => {
     try {
-      await deleteList(id);
+      await deleteList!(id);
       addToast({
         type: 'success',
         title: 'List deleted',
@@ -91,7 +105,7 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
         description: error instanceof Error ? error.message : 'Please try again.',
       });
     }
-  };
+  } : null;
 
   return (
     <>
@@ -117,8 +131,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction showOnHover disabled={isDeleting[list.id]}>
-                      {isDeleting[list.id] ? (
+                    <SidebarMenuAction showOnHover disabled={isDashboard && isDeleting[list.id]}>
+                      {isDashboard && isDeleting[list.id] ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <MoreHorizontal />
@@ -170,12 +184,12 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteList(list.id, list.title)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete List
-                              </AlertDialogAction>
+                                                           <AlertDialogAction
+                               onClick={() => handleDeleteList?.(list.id, list.title)}
+                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                             >
+                               Delete List
+                             </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
