@@ -1,8 +1,8 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Edit3, List, MoreHorizontal, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { List, MoreHorizontal, Plus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { CreateDialog, EditListDialog } from "@/components/create-dialog";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -32,11 +32,6 @@ const data = [
 				icon: Plus,
 			},
 			{
-				id: "edit-list",
-				label: "Edit List",
-				icon: Edit3,
-			},
-			{
 				id: "view-all-lists",
 				label: "View All Lists",
 				icon: List,
@@ -57,6 +52,29 @@ export function NavActions({ selectedList }: NavActionsProps) {
 	const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
 	const [editDialogOpen, setEditDialogOpen] = React.useState(false);
 	const router = useRouter();
+	const pathname = usePathname();
+
+	// Filter items based on current route
+	const getVisibleItems = () => {
+		const isDashboard = pathname === "/dashboard";
+		const isListPage = pathname.startsWith("/lists/");
+
+		return data[0].items.filter((item) => {
+			switch (item.id) {
+				case "view-all-lists":
+					// Hide "View All Lists" when on dashboard
+					return !isDashboard;
+				case "edit-list":
+					// Only show "Edit List" when on a list page and selectedList exists
+					return isListPage && selectedList;
+				case "create-list":
+					// Always show "Create New List"
+					return true;
+				default:
+					return true;
+			}
+		});
+	};
 
 	const handleMenuItemClick = (itemId: string) => {
 		setIsOpen(false);
@@ -95,29 +113,22 @@ export function NavActions({ selectedList }: NavActionsProps) {
 					>
 						<Sidebar collapsible="none" className="bg-transparent">
 							<SidebarContent>
-								{data.map((group) => (
-									<SidebarGroup
-										key={group.id}
-										className="border-b last:border-none"
-									>
-										<SidebarGroupContent className="gap-0">
-											<SidebarMenu>
-												{group.items.map((item) => (
-													<SidebarMenuItem key={item.id}>
-														<SidebarMenuButton
-															onClick={() => handleMenuItemClick(item.id)}
-															disabled={
-																item.id === "edit-list" && !selectedList
-															}
-														>
-															<item.icon /> <span>{item.label}</span>
-														</SidebarMenuButton>
-													</SidebarMenuItem>
-												))}
-											</SidebarMenu>
-										</SidebarGroupContent>
-									</SidebarGroup>
-								))}
+								<SidebarGroup className="border-b last:border-none">
+									<SidebarGroupContent className="gap-0">
+										<SidebarMenu>
+											{getVisibleItems().map((item) => (
+												<SidebarMenuItem key={item.id}>
+													<SidebarMenuButton
+														onClick={() => handleMenuItemClick(item.id)}
+														disabled={item.id === "edit-list" && !selectedList}
+													>
+														<item.icon /> <span>{item.label}</span>
+													</SidebarMenuButton>
+												</SidebarMenuItem>
+											))}
+										</SidebarMenu>
+									</SidebarGroupContent>
+								</SidebarGroup>
 							</SidebarContent>
 						</Sidebar>
 					</PopoverContent>

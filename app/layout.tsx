@@ -2,6 +2,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ProgressBarProvider } from "@/components/progress-bar-provider";
+import { ToastProvider } from "@/components/providers/toast-provider";
+import { ErrorBoundaryProvider } from "@/components/providers/error-boundary-provider";
+import { ModalProvider } from "@/components/providers/modal-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -35,7 +39,12 @@ export default function RootLayout({
 						enableSystem
 						disableTransitionOnChange
 					>
-						{children}
+						<ErrorBoundaryProvider>
+							<ProgressBarProvider />
+							<ToastProvider />
+							<ModalProvider />
+							{children}
+						</ErrorBoundaryProvider>
 					</ThemeProvider>
 				</body>
 			</html>

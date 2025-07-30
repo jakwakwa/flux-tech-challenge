@@ -3,7 +3,7 @@
 	"css.validate": false,
 	"less.validate": false,
 	"scss.validate": false,
-	"css.customData": [".vscode/css_custom_data.json"],
+		"css.customData": [".vscode/css_custom_data.json"],
 	"terminal.integrated.shellIntegration.decorationsEnabled": true,
 	"terminal.integrated.shellIntegration.enabled": true,
 	"terminal.integrated.defaultProfile.linux": "zsh",
@@ -20,7 +20,7 @@
 		}
 	},
 	"editor.fontFamily": "Dank Mono",
-	"editor.fontSize": 12,
+	"editor.fontSize": 13,
 	"editor.fontLigatures": true,
 	"editor.lineHeight": 1.7,
 	"editor.fontWeight": "800",
@@ -38,7 +38,6 @@
 	"terminal.integrated.wordSeparators": " ()[]{}'\"`─",
 	"terminal.integrated.localEchoLatencyThreshold": 2,
 	"terminal.integrated.enableFileLinks": "on",
-
 	"terminal.integrated.allowChords": false,
 	"terminal.integrated.gpuAcceleration": "off",
 	"terminal.integrated.tabs.defaultColor": "terminal.ansiBlue",
@@ -53,10 +52,11 @@
 	"editor.wordWrap": "bounded",
 	"cursor.general.enableShadowWorkspace": false,
 	"cursor.windowSwitcher.sidebarHoverCollapsed": false,
-	"workbench.preferredDarkColorTheme": "Cursor Dark",
+	"workbench.preferredDarkColorTheme": "Best Themes - Github Dark",
 	"window.autoDetectColorScheme": true,
 	"workbench.preferredLightColorTheme": "One Dark Pro",
 	"workbench.colorTheme": "Night Wolf (gray)",
+	"editor.defaultFormatter": "biomejs.biome",
 	"editor.formatOnSave": true,
 	"json.format.enable": false,
 	"[typescript]": {
@@ -64,6 +64,6 @@
 	},
 	"editor.codeActionsOnSave": {
 		"source.organizeImports.biome": "explicit"
-
 	}
+
 }

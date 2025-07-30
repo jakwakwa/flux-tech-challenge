@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { NavActions } from "@/components/nav-actions";
+import { TaskActions } from "@/components/task-actions";
 import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,
@@ -167,13 +168,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
 								<CardTitle>Actions</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="flex gap-3">
-									<Button variant="outline">Edit Task</Button>
-									<Button variant={task.completed ? "secondary" : "default"}>
-										{task.completed ? "Mark as Pending" : "Mark as Complete"}
-									</Button>
-									<Button variant="destructive">Delete Task</Button>
-								</div>
+								<TaskActions task={task} />
 							</CardContent>
 						</Card>
 					</div>
