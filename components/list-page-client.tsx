@@ -50,7 +50,7 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
   const pendingTasks = totalTasks - completedTasks;
 
   // Task action handlers
-  const handleTaskUpdate = async (taskId: string, updates: any) => {
+  const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
     try {
       await updateTask(taskId, updates);
       addToast({
