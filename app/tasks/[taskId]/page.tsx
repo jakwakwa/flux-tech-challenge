@@ -2,8 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { ArrowLeft, Calendar, Clock, List } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { TaskActions } from "@/app/tasks/_components/task-actions";
+import { NavActions } from "@/components/action-menus/nav-actions";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavActions } from "@/components/nav-actions";
 import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,
@@ -89,7 +90,9 @@ export default async function TaskPage({ params }: TaskPageProps) {
 						</Breadcrumb>
 					</div>
 					<div className="ml-auto flex items-center gap-3 px-3">
-						<NavActions />
+						<NavActions
+							selectedList={{ id: task.list.id, title: task.list.title }}
+						/>
 					</div>
 				</header>
 
@@ -167,13 +170,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
 								<CardTitle>Actions</CardTitle>
 							</CardHeader>
 							<CardContent>
-								<div className="flex gap-3">
-									<Button variant="outline">Edit Task</Button>
-									<Button variant={task.completed ? "secondary" : "default"}>
-										{task.completed ? "Mark as Pending" : "Mark as Complete"}
-									</Button>
-									<Button variant="destructive">Delete Task</Button>
-								</div>
+								<TaskActions task={task} />
 							</CardContent>
 						</Card>
 					</div>

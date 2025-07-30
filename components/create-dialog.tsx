@@ -37,6 +37,9 @@ import {
 	SidebarMenuItem,
 	SidebarProvider,
 } from "@/components/ui/sidebar";
+import { useListStore } from "@/lib/store/use-list-store";
+import { useTaskStore } from "@/lib/store/use-task-store";
+import { useUIStore } from "@/lib/store/use-ui-store";
 import { Textarea } from "./ui/textarea";
 
 // Textarea component will be added when available
@@ -46,6 +49,7 @@ interface CreateDialogProps {
 	defaultMode?: "task" | "list";
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	currentListId?: string; // The list ID of the current page (if on a list page)
 }
 
 interface EditTaskDialogProps {
@@ -96,6 +100,7 @@ export function CreateDialog({
 	defaultMode = "task",
 	open: externalOpen,
 	onOpenChange: externalOnOpenChange,
+	currentListId,
 }: CreateDialogProps) {
 	const [internalOpen, setInternalOpen] = React.useState(false);
 
@@ -105,8 +110,12 @@ export function CreateDialog({
 	const [activeMode, setActiveMode] = React.useState<"task" | "list">(
 		defaultMode,
 	);
-	const [isLoading, setIsLoading] = React.useState(false);
 	const router = useRouter();
+
+	// Stores
+	const { lists, isCreating: isCreatingList, createList } = useListStore();
+	const { isCreating: isCreatingTask, createTask } = useTaskStore();
+	const { addToast } = useUIStore();
 
 	// Task form state
 	const [taskTitle, setTaskTitle] = React.useState("");
@@ -117,27 +126,27 @@ export function CreateDialog({
 	const [listTitle, setListTitle] = React.useState("");
 	const [listError, setListError] = React.useState<string | null>(null);
 
-	// Available lists (this could come from props or a hook)
-	const [availableLists, setAvailableLists] = React.useState<TodoList[]>([]);
+	// Use lists from store instead of local state
+	const availableLists = lists;
 
-	const fetchLists = React.useCallback(async () => {
-		try {
-			const response = await fetch("/api/lists");
-			if (response.ok) {
-				const lists = await response.json();
-				setAvailableLists(lists);
-			}
-		} catch (error) {
-			console.error("Error fetching lists:", error);
-		}
-	}, []);
+	// Lists are automatically available from the store
 
-	// Fetch available lists when dialog opens and task mode is selected
+	// Reset form state when dialog opens/closes or defaultMode changes
 	React.useEffect(() => {
-		if (open && activeMode === "task") {
-			fetchLists();
+		if (open) {
+			// Reset to the correct mode when dialog opens
+			setActiveMode(defaultMode);
+			// Clear all form fields
+			setTaskTitle("");
+			setTaskDescription("");
+			// Pre-select current list if we're on a list page and in task mode
+			setSelectedListId(
+				defaultMode === "task" && currentListId ? currentListId : "",
+			);
+			setListTitle("");
+			setListError(null);
 		}
-	}, [open, activeMode, fetchLists]);
+	}, [open, defaultMode, currentListId]);
 
 	// Clear errors when dialog closes or mode changes
 	React.useEffect(() => {
@@ -150,35 +159,48 @@ export function CreateDialog({
 		e.preventDefault();
 		if (!taskTitle.trim() || !selectedListId) return;
 
-		setIsLoading(true);
 		try {
-			const response = await fetch("/api/tasks", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					title: taskTitle.trim(),
-					description: taskDescription.trim() || undefined,
-					listId: selectedListId,
-				}),
+			const newTask = await createTask({
+				title: taskTitle.trim(),
+				description: taskDescription.trim() || undefined,
+				listId: selectedListId,
 			});
 
-			if (response.ok) {
-				// Reset form
+			if (newTask) {
+				// Task counts are automatically updated by the task store
+
+				// Check if task was created for a different list than current page
+				const isCreatedForDifferentList =
+					currentListId && selectedListId !== currentListId;
+
+				// Reset form completely
 				setTaskTitle("");
 				setTaskDescription("");
 				setSelectedListId("");
 				setOpen(false);
-				router.refresh();
-			} else {
-				const errorText = await response.text();
-				console.error("Failed to create task:", response.status, errorText);
+				// Reset to default mode for next time
+				setActiveMode(defaultMode);
+
+				addToast({
+					type: "success",
+					title: "Task created",
+					description: "Your task has been added successfully.",
+				});
+
+				// If task was created for a different list, redirect to that list
+				if (isCreatedForDifferentList) {
+					router.push(`/lists/${selectedListId}`);
+				}
+				// If same list or no current list, stay on current page (reactive update will show task)
 			}
 		} catch (error) {
 			console.error("Error creating task:", error);
-		} finally {
-			setIsLoading(false);
+			addToast({
+				type: "error",
+				title: "Failed to create task",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+			});
 		}
 	};
 
@@ -186,46 +208,43 @@ export function CreateDialog({
 		e.preventDefault();
 		if (!listTitle.trim()) return;
 
-		setIsLoading(true);
 		setListError(null); // Clear any previous errors
 		try {
-			const response = await fetch("/api/lists", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					title: listTitle.trim(),
-				}),
-			});
+			const newList = await createList(listTitle.trim());
 
-			if (response.ok) {
-				// Reset form
+			if (newList) {
+				// Reset form completely
 				setListTitle("");
 				setListError(null);
 				setOpen(false);
-				router.refresh();
-			} else {
-				const errorText = await response.text();
-				console.error("Failed to create list:", response.status, errorText);
+				// Reset to default mode for next time
+				setActiveMode(defaultMode);
 
-				// Show user-friendly error message
-				if (response.status === 429) {
-					setListError(errorText);
-				} else {
-					setListError("Failed to create list. Please try again.");
-				}
+				addToast({
+					type: "success",
+					title: "List created",
+					description: "Your list has been created successfully.",
+				});
 			}
 		} catch (error) {
 			console.error("Error creating list:", error);
-			setListError("An unexpected error occurred. Please try again.");
-		} finally {
-			setIsLoading(false);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "An unexpected error occurred. Please try again.";
+			setListError(errorMessage);
+
+			addToast({
+				type: "error",
+				title: "Failed to create list",
+				description: errorMessage,
+			});
 		}
 	};
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
+			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 			<DialogContent className="overflow-hidden p-0 md:max-h-[600px] md:max-w-[700px] lg:max-w-[800px]">
 				<DialogTitle className="sr-only">
 					Create {activeMode === "task" ? "Task" : "List"}
@@ -327,10 +346,10 @@ export function CreateDialog({
 										<Button
 											type="submit"
 											disabled={
-												isLoading || !taskTitle.trim() || !selectedListId
+												isCreatingTask || !taskTitle.trim() || !selectedListId
 											}
 										>
-											{isLoading ? "Creating..." : "Create Task"}
+											{isCreatingTask ? "Creating..." : "Create Task"}
 										</Button>
 										<Button
 											type="button"
@@ -369,9 +388,9 @@ export function CreateDialog({
 									<div className="flex gap-3 pt-4">
 										<Button
 											type="submit"
-											disabled={isLoading || !listTitle.trim()}
+											disabled={isCreatingList || !listTitle.trim()}
 										>
-											{isLoading ? "Creating..." : "Create List"}
+											{isCreatingList ? "Creating..." : "Create List"}
 										</Button>
 										<Button
 											type="button"
@@ -399,8 +418,12 @@ export function EditTaskDialog({
 	onOpenChange: externalOnOpenChange,
 }: EditTaskDialogProps) {
 	const [internalOpen, setInternalOpen] = React.useState(false);
-	const [isLoading, setIsLoading] = React.useState(false);
 	const router = useRouter();
+
+	// Stores
+	const { lists } = useListStore();
+	const { isUpdating, updateTask } = useTaskStore();
+	const { addToast } = useUIStore();
 
 	// Use external open state if provided, otherwise use internal state
 	const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -413,76 +436,56 @@ export function EditTaskDialog({
 	);
 	const [selectedListId, setSelectedListId] = React.useState(task.listId);
 
-	// Available lists
-	const [availableLists, setAvailableLists] = React.useState<TodoList[]>([]);
+	// Use lists from store
+	const availableLists = lists;
 
-	const fetchLists = React.useCallback(async () => {
-		try {
-			const response = await fetch("/api/lists");
-			if (response.ok) {
-				const lists = await response.json();
-				setAvailableLists(lists);
-			}
-		} catch (error) {
-			console.error("Error fetching lists:", error);
-		}
-	}, []);
+	// Lists are automatically available from the store
 
-	// Fetch available lists when dialog opens
+	// Reset form when task prop changes or dialog opens/closes
 	React.useEffect(() => {
 		if (open) {
-			fetchLists();
+			// Reset form to task data when dialog opens
+			setTaskTitle(task.title);
+			setTaskDescription(task.description || "");
+			setSelectedListId(task.listId);
 		}
-	}, [open, fetchLists]);
-
-	// Reset form when task prop changes
-	React.useEffect(() => {
-		setTaskTitle(task.title);
-		setTaskDescription(task.description || "");
-		setSelectedListId(task.listId);
-	}, [task]);
+	}, [task, open]);
 
 	const handleUpdateTask = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!taskTitle.trim() || !selectedListId) return;
 
-		setIsLoading(true);
 		try {
-			const response = await fetch("/api/tasks", {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					taskId: task.id,
+			await updateTask(task.id, {
+				title: taskTitle.trim(),
+				description: taskDescription.trim() || undefined,
+				listId: selectedListId,
+			});
+
+			// Call the callback to update parent state if provided
+			if (onTaskUpdate) {
+				onTaskUpdate(task.id, {
 					title: taskTitle.trim(),
 					description: taskDescription.trim() || undefined,
 					listId: selectedListId,
-				}),
-			});
-
-			if (response.ok) {
-				const updatedTask = await response.json();
-
-				// Call the callback to update parent state if provided
-				if (onTaskUpdate) {
-					onTaskUpdate(task.id, {
-						title: taskTitle.trim(),
-						description: taskDescription.trim() || undefined,
-						listId: selectedListId,
-					});
-				}
-
-				setOpen(false);
-				router.refresh();
-			} else {
-				const errorText = await response.text();
-				console.error("Failed to update task:", response.status, errorText);
+				});
 			}
+
+			setOpen(false);
+
+			addToast({
+				type: "success",
+				title: "Task updated",
+				description: "Your changes have been saved successfully.",
+			});
 		} catch (error) {
 			console.error("Error updating task:", error);
-		} finally {
-			setIsLoading(false);
+			addToast({
+				type: "error",
+				title: "Failed to update task",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+			});
 		}
 	};
 
@@ -556,9 +559,11 @@ export function EditTaskDialog({
 							<div className="flex gap-3 pt-4">
 								<Button
 									type="submit"
-									disabled={isLoading || !taskTitle.trim() || !selectedListId}
+									disabled={
+										isUpdating[task.id] || !taskTitle.trim() || !selectedListId
+									}
 								>
-									{isLoading ? "Updating..." : "Update Task"}
+									{isUpdating[task.id] ? "Updating..." : "Update Task"}
 								</Button>
 								<Button
 									type="button"
@@ -584,8 +589,11 @@ export function EditListDialog({
 	onOpenChange: externalOnOpenChange,
 }: EditListDialogProps) {
 	const [internalOpen, setInternalOpen] = React.useState(false);
-	const [isLoading, setIsLoading] = React.useState(false);
 	const router = useRouter();
+
+	// Stores
+	const { isUpdating, updateList } = useListStore();
+	const { addToast } = useUIStore();
 
 	// Use external open state if provided, otherwise use internal state
 	const open = externalOpen !== undefined ? externalOpen : internalOpen;
@@ -594,48 +602,43 @@ export function EditListDialog({
 	// List form state - initialize with existing list data
 	const [listTitle, setListTitle] = React.useState(list.title);
 
-	// Reset form when list prop changes
+	// Reset form when list prop changes or dialog opens/closes
 	React.useEffect(() => {
-		setListTitle(list.title);
-	}, [list]);
+		if (open) {
+			// Reset form to list data when dialog opens
+			setListTitle(list.title);
+		}
+	}, [list, open]);
 
 	const handleUpdateList = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!listTitle.trim()) return;
 
-		setIsLoading(true);
 		try {
-			const response = await fetch("/api/lists", {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					listId: list.id,
+			await updateList(list.id, listTitle.trim());
+
+			// Call the callback to update parent state if provided
+			if (onListUpdate) {
+				onListUpdate(list.id, {
 					title: listTitle.trim(),
-				}),
-			});
-
-			if (response.ok) {
-				const updatedList = await response.json();
-
-				// Call the callback to update parent state if provided
-				if (onListUpdate) {
-					onListUpdate(list.id, {
-						title: listTitle.trim(),
-					});
-				}
-
-				setOpen(false);
-				router.refresh();
-			} else {
-				const errorText = await response.text();
-				console.error("Failed to update list:", response.status, errorText);
+				});
 			}
+
+			setOpen(false);
+
+			addToast({
+				type: "success",
+				title: "List updated",
+				description: "Your list has been updated successfully.",
+			});
 		} catch (error) {
 			console.error("Error updating list:", error);
-		} finally {
-			setIsLoading(false);
+			addToast({
+				type: "error",
+				title: "Failed to update list",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+			});
 		}
 	};
 
@@ -677,9 +680,9 @@ export function EditListDialog({
 								<div className="flex gap-3 pt-4">
 									<Button
 										type="submit"
-										disabled={isLoading || !listTitle.trim()}
+										disabled={isUpdating[list.id] || !listTitle.trim()}
 									>
-										{isLoading ? "Updating..." : "Update List"}
+										{isUpdating[list.id] ? "Updating..." : "Update List"}
 									</Button>
 									<Button
 										type="button"

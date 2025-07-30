@@ -1,6 +1,6 @@
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { CheckCircle, List, Search, Users } from "lucide-react";
+import { CheckCircle, List, Search } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {

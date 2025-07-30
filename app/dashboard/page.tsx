@@ -1,16 +1,19 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
+import { NavActions } from "@/components/action-menus/nav-actions";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavActions } from "@/components/nav-actions";
-import { TaskTableClient } from "@/components/task-table-client";
+import { CreateDialog } from "@/components/create-dialog";
+import { DashboardTableClient } from "@/components/dashboard-client";
+import { StoreInitializer } from "@/components/store-initializer";
 import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
 	BreadcrumbList,
 	BreadcrumbPage,
-	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -20,11 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import prisma from "@/lib/prisma";
 
-export default async function Page({
-	searchParams,
-}: {
-	searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function DashboardPage() {
 	const { userId } = await auth();
 
 	if (!userId) {
@@ -51,36 +50,7 @@ export default async function Page({
 		},
 	});
 
-	// Await searchParams in Next.js 15
-	const resolvedSearchParams = await searchParams;
-	const { listId: rawListId } = resolvedSearchParams;
-
-	// Normalize listId to string (take first value if array)
-	const listId = Array.isArray(rawListId) ? rawListId[0] : rawListId;
-
-	// Fetch user's tasks with list information, filtered by listId if present
-	const userTasks = await prisma.task.findMany({
-		where: {
-			list: {
-				userId: userId,
-				...(listId && { id: listId }),
-			},
-		},
-		include: {
-			list: {
-				select: {
-					id: true,
-					title: true,
-				},
-			},
-		},
-		orderBy: {
-			createdAt: "desc",
-		},
-		take: 20, // Limit to recent 20 tasks for dashboard
-	});
-
-	// Fetch user's lists for stats
+	// Fetch user's lists with task counts
 	const userLists = await prisma.list.findMany({
 		where: {
 			userId: userId,
@@ -88,36 +58,25 @@ export default async function Page({
 		include: {
 			tasks: true,
 		},
+		orderBy: {
+			createdAt: "desc",
+		},
 	});
 
-	// Fetch the selected list if listId is provided
-	const selectedList = listId
-		? await prisma.list.findFirst({
-				where: {
-					id: listId,
-					userId: userId,
-				},
-			})
-		: null;
-
-	// Transform data for TaskTable
-	const tasksForTable = userTasks.map((task) => ({
-		id: task.id,
-		title: task.title,
-		description: task.description || undefined,
-		completed: task.completed,
-		listId: task.listId,
-		listName: task.list.title,
-		createdAt: task.createdAt,
-		updatedAt: task.updatedAt,
-	}));
-
-	// Calculate stats
-	const totalTasks = userTasks.length;
-	const completedTasks = userTasks.filter((task) => task.completed).length;
+	// Calculate overall stats
 	const totalLists = userLists.length;
+	const totalTasks = userLists.reduce(
+		(sum, list) => sum + list.tasks.length,
+		0,
+	);
+	const completedTasks = userLists.reduce(
+		(sum, list) => sum + list.tasks.filter((task) => task.completed).length,
+		0,
+	);
+
 	return (
 		<SidebarProvider>
+			<StoreInitializer lists={userLists} />
 			<AppSidebar />
 			<SidebarInset>
 				<header className="flex h-14 shrink-0 items-center gap-2">
@@ -131,37 +90,20 @@ export default async function Page({
 										Dashboard
 									</BreadcrumbPage>
 								</BreadcrumbItem>
-								{selectedList && (
-									<>
-										<BreadcrumbSeparator />
-										<BreadcrumbItem>
-											<BreadcrumbPage className="line-clamp-1">
-												{selectedList.title}
-											</BreadcrumbPage>
-										</BreadcrumbItem>
-									</>
-								)}
 							</BreadcrumbList>
 						</Breadcrumb>
 					</div>
 					<div className="ml-auto flex items-center gap-3 px-3">
-						<NavActions selectedList={selectedList} />
+						<NavActions />
 					</div>
 				</header>
 
 				<div className="flex flex-1 flex-col gap-6 p-6">
 					{/* Welcome Section */}
 					<div className="space-y-2">
-						{selectedList ? (
-							<h1 className="text-2xl font-normal">
-								Current List:{" "}
-								<span className="font-bold">{selectedList.title}</span>
-							</h1>
-						) : (
-							<h1 className="text-2xl font-bold">Welcome back 👋</h1>
-						)}
+						<h1 className="text-2xl font-bold">Welcome back 👋</h1>
 						<p className="text-muted-foreground">
-							Here's what's happening with your tasks today.
+							Here's an overview of your todo lists.
 						</p>
 					</div>
 
@@ -191,7 +133,9 @@ export default async function Page({
 							</CardHeader>
 							<CardContent>
 								<div className="text-2xl font-bold">{totalTasks}</div>
-								<p className="text-xs text-muted-foreground">Recent tasks</p>
+								<p className="text-xs text-muted-foreground">
+									Across all lists
+								</p>
 							</CardContent>
 						</Card>
 
@@ -215,9 +159,47 @@ export default async function Page({
 						</Card>
 					</div>
 
-					{/* Task Table */}
+					{/* Lists Table */}
 					<div className="space-y-4">
-						<TaskTableClient initialTasks={tasksForTable} />
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold">Your Lists</h2>
+							<CreateDialog
+								defaultMode="list"
+								trigger={
+									<Button size="sm">
+										<Plus className="h-4 w-4 mr-2" />
+										Create List
+									</Button>
+								}
+							/>
+						</div>
+
+						{userLists.length === 0 ? (
+							<Card className="p-12 text-center">
+								<div className="mx-auto w-fit">
+									<div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+										<Plus className="h-6 w-6 text-muted-foreground" />
+									</div>
+									<h3 className="mt-4 text-lg font-semibold">No lists yet</h3>
+									<p className="mt-2 text-sm text-muted-foreground">
+										Create your first list to start organizing your tasks.
+									</p>
+									<CreateDialog
+										defaultMode="list"
+										trigger={
+											<Button className="mt-4" size="sm">
+												<Plus className="h-4 w-4 mr-2" />
+												Create your first list
+											</Button>
+										}
+									/>
+								</div>
+							</Card>
+						) : (
+							<Card>
+								<DashboardTableClient initialLists={userLists} />
+							</Card>
+						)}
 					</div>
 				</div>
 			</SidebarInset>
