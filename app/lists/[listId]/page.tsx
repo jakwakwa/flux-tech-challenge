@@ -1,9 +1,10 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { redirect, notFound } from "next/navigation";
+
+import { notFound, redirect } from "next/navigation";
+import { ListPageClient } from "@/app/lists/_components/list-page-client";
+import { NavActions } from "@/components/action-menus/nav-actions";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavActions } from "@/components/nav-actions";
-import { TaskTable } from "@/components/task-table";
-import { Badge } from "@/components/ui/badge";
+import { StoreInitializer } from "@/components/store-initializer";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -12,18 +13,12 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { CreateDialog } from "@/components/create-dialog";
-import { StoreInitializer } from "@/components/store-initializer";
-import { ListPageClient } from "@/components/list-page-client";
 import prisma from "@/lib/prisma";
 
 interface ListPageProps {
@@ -107,9 +102,7 @@ export default async function ListPage({ params }: ListPageProps) {
 						<Breadcrumb>
 							<BreadcrumbList>
 								<BreadcrumbItem>
-									<BreadcrumbLink href="/dashboard">
-										Dashboard
-									</BreadcrumbLink>
+									<BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
 								</BreadcrumbItem>
 								<BreadcrumbSeparator />
 								<BreadcrumbItem>
@@ -131,9 +124,7 @@ export default async function ListPage({ params }: ListPageProps) {
 						<h1 className="text-2xl font-normal">
 							List: <span className="font-bold">{list.title}</span>
 						</h1>
-						<p className="text-muted-foreground">
-							Manage tasks in this list.
-						</p>
+						<p className="text-muted-foreground">Manage tasks in this list.</p>
 					</div>
 
 					{/* Client component that reactively displays tasks from store */}

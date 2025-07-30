@@ -60,6 +60,7 @@ export function NavMain({
 										className="ml-auto h-5 px-1.5 text-xs"
 									>
 										{item.badge}
+										shqhqubibqwb
 									</Badge>
 								)}
 							</a>

@@ -2,10 +2,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { ErrorBoundaryProvider } from "@/app/providers/error-boundary-provider";
+import { ModalProvider } from "@/app/providers/modal-provider";
+import { ToastProvider } from "@/app/providers/toast-provider";
 import { ProgressBarProvider } from "@/components/progress-bar-provider";
-import { ErrorBoundaryProvider } from "@/components/providers/error-boundary-provider";
-import { ModalProvider } from "@/components/providers/modal-provider";
-import { ToastProvider } from "@/components/providers/toast-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL

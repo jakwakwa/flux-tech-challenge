@@ -2,9 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { ArrowLeft, Calendar, Clock, List } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { TaskActions } from "@/app/tasks/_components/task-actions";
+import { NavActions } from "@/components/action-menus/nav-actions";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavActions } from "@/components/nav-actions";
-import { TaskActions } from "@/components/task-actions";
 import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,

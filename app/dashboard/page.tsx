@@ -1,7 +1,11 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { Plus } from "lucide-react";
 import { redirect } from "next/navigation";
+import { NavActions } from "@/components/action-menus/nav-actions";
 import { AppSidebar } from "@/components/app-sidebar";
-import { NavActions } from "@/components/nav-actions";
+import { CreateDialog } from "@/components/create-dialog";
+import { DashboardTableClient } from "@/components/dashboard-client";
+import { StoreInitializer } from "@/components/store-initializer";
 import { Badge } from "@/components/ui/badge";
 import {
 	Breadcrumb,
@@ -9,6 +13,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -16,27 +21,6 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Plus, MoreVertical, Edit2, Trash2, ArrowRight } from "lucide-react";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import { CreateDialog } from "@/components/create-dialog";
-import { StoreInitializer } from "@/components/store-initializer";
-import { DashboardTableClient } from "@/components/dashboard-client";
-import Link from "next/link";
 import prisma from "@/lib/prisma";
 
 export default async function DashboardPage() {
@@ -81,10 +65,13 @@ export default async function DashboardPage() {
 
 	// Calculate overall stats
 	const totalLists = userLists.length;
-	const totalTasks = userLists.reduce((sum, list) => sum + list.tasks.length, 0);
+	const totalTasks = userLists.reduce(
+		(sum, list) => sum + list.tasks.length,
+		0,
+	);
 	const completedTasks = userLists.reduce(
-		(sum, list) => sum + list.tasks.filter(task => task.completed).length,
-		0
+		(sum, list) => sum + list.tasks.filter((task) => task.completed).length,
+		0,
 	);
 
 	return (
@@ -146,7 +133,9 @@ export default async function DashboardPage() {
 							</CardHeader>
 							<CardContent>
 								<div className="text-2xl font-bold">{totalTasks}</div>
-								<p className="text-xs text-muted-foreground">Across all lists</p>
+								<p className="text-xs text-muted-foreground">
+									Across all lists
+								</p>
 							</CardContent>
 						</Card>
 

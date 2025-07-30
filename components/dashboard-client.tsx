@@ -59,7 +59,6 @@ export function DashboardTableClient({
 		id: string;
 		title: string;
 	} | null>(null);
-	const [isStoreInitialized, setIsStoreInitialized] = useState(false);
 
 	// Fetch fresh data if the store has been modified (e.g., after deletions)
 	useEffect(() => {
@@ -68,16 +67,9 @@ export function DashboardTableClient({
 		}
 	}, [hasBeenModified, fetchLists]);
 
-	// Track if the store has been initialized (once it has data, it becomes the source of truth)
-	useEffect(() => {
-		if (lists.length > 0) {
-			setIsStoreInitialized(true);
-		}
-	}, [lists.length]);
-
-	// Use store lists if initialized, otherwise use initial lists
-	// Once the store is initialized, it remains the source of truth even when empty
-	const displayLists = isStoreInitialized ? lists : initialLists;
+	// Use store lists if the store has been modified, otherwise use initial lists
+	// This ensures that newly created lists appear immediately
+	const displayLists = hasBeenModified ? lists : initialLists;
 
 	const handleDeleteList = async (id: string, title: string) => {
 		try {

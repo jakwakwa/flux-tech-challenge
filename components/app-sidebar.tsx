@@ -1,8 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import * as React from "react";
-
+import type * as React from "react";
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavTodoListsClient } from "@/components/nav-todo-lists-client";
 import {
 	Sidebar,
@@ -21,7 +19,6 @@ export async function AppSidebar({
 		return null;
 	}
 
-	// Fetch user's lists with task counts
 	const userLists = await prisma.list.findMany({
 		where: {
 			userId: userId,
@@ -39,16 +36,6 @@ export async function AppSidebar({
 		},
 	});
 
-	// Get total task count for "All Tasks" badge
-	const totalTaskCount = await prisma.task.count({
-		where: {
-			list: {
-				userId: userId,
-			},
-		},
-	});
-
-	// Transform data for the client component (simplified, only lists without individual task details)
 	const todoLists = userLists.map((list) => ({
 		id: list.id,
 		title: list.title,

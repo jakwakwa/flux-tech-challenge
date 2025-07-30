@@ -19,18 +19,7 @@
 			}
 		],
 		"paths": {
-			"@/*": [
-				"./*",
-				"./components/*",
-				"./lib/*",
-				"./hooks/*",
-				"./app/*",
-				"./store/*",
-				"./config/*",
-				"./prisma/*",
-				"./scripts/*"
-			],
-			"components/ui/*": ["./components/ui/*", "./components/new/*"]
+			"@/*": ["./*"]
 		}
 	},
 	"ts-node": {
@@ -38,51 +27,6 @@
 			"module": "commonjs"
 		}
 	},
-	"include": [
-		"next-env.d.ts",
-		"*.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts"
-	],
-	"exclude": [
-		".mdc",
-		".md",
-		".css",
-		".scss",
-		".sass",
-		".less",
-		".styl",
-		".stylus",
-		".pcss",
-		".postcss",
-		".configig",
-		".cursor",
-		".cursorrules",
-		".cursorignore",
-		".cursorignorerules",
-		".cursorignorecursorrules",
-		".cursorignorecursorrules",
-		"/docs",
-		"/public",
-		"/styles",
-		"/styles/globals.css",
-		"/styles/globals.css.map",
-		"/styles/globals.css.map",
-		"**/*.disabled",
-		".yml",
-		".yaml",
-		".json",
-		".jsonc",
-		".jsonrc",
-		".json5",
-		".mjs",
-		".mts",
-		".cts",
-		".mtsx",
-		".ctsx",
-		".mjs",
-		".mts",
-		"node_modules"
-	]
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+	"exclude": ["node_modules"]
 }
