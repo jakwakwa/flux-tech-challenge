@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
-import { NavTodoLists } from "@/components/nav-todo-lists";
+import { NavTodoListsClient } from "@/components/nav-todo-lists-client";
 import {
 	Sidebar,
 	SidebarContent,
@@ -11,32 +11,6 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import prisma from "@/lib/prisma";
-
-// Get consistent emoji for lists based on ID
-const getEmojiForList = (listId: string) => {
-	const emojis = [
-		"📝",
-		"💼",
-		"🎯",
-		"🛒",
-		"🏠",
-		"📚",
-		"🎵",
-		"🎨",
-		"🍳",
-		"🏃",
-		"💡",
-		"🎮",
-	];
-	// Use simple hash function to get consistent emoji based on list ID
-	let hash = 0;
-	for (let i = 0; i < listId.length; i++) {
-		const char = listId.charCodeAt(i);
-		hash = (hash << 5) - hash + char;
-		hash = hash & hash; // Convert to 32-bit integer
-	}
-	return emojis[Math.abs(hash) % emojis.length];
-};
 
 export async function AppSidebar({
 	...props
@@ -54,10 +28,10 @@ export async function AppSidebar({
 		},
 		include: {
 			tasks: {
-				orderBy: {
-					createdAt: "desc",
+				select: {
+					id: true,
+					completed: true,
 				},
-				take: 10, // Limit to 10 most recent tasks per list for sidebar
 			},
 		},
 		orderBy: {
@@ -74,18 +48,12 @@ export async function AppSidebar({
 		},
 	});
 
-	// Transform data for components
+	// Transform data for the client component (simplified, only lists without individual task details)
 	const todoLists = userLists.map((list) => ({
 		id: list.id,
-		name: list.title, // Map list.title to name
-		url: `/lists/${list.id}`, // Re-added the url property
-		icon: getEmojiForList(list.id),
-		taskCount: list.tasks.length,
-		completedCount: list.tasks.filter((task) => task.completed).length,
+		title: list.title,
 		tasks: list.tasks.map((task) => ({
-			// Ensure tasks are also using Prisma Task type
 			id: task.id,
-			title: task.title,
 			completed: task.completed,
 		})),
 	}));
@@ -108,7 +76,7 @@ export async function AppSidebar({
 				<NavMain items={navMain} />
 			</SidebarHeader>
 			<SidebarContent>
-				<NavTodoLists todoLists={todoLists} />
+				<NavTodoListsClient initialLists={todoLists} />
 			</SidebarContent>
 			<SidebarRail />
 		</Sidebar>
