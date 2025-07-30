@@ -1,7 +1,11 @@
 ---
-description: Rules for building @app/page.tsx
+description: This rule applies when creating any new additional NextJs Pages in /app directory
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
+# NextJs Page Rules
 
-always use  or @app/layout.tsx to contain new pages. use @app/page/ and @app/collections as a guide and standard. This is so we have the sidebar and header at all times throughout the app.
+This rule applies when creating *any new additional* NextJs Pages in /app directory
+
+* ALWAYS use or `@app/layout.tsx` to contain ANY new pages.
+* use `@app/page/`  This is so we have the sidebar and header at all times throughout the app.
