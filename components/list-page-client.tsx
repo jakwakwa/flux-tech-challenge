@@ -2,10 +2,11 @@
 
 import { useMemo } from 'react';
 import { useTaskStore } from '@/lib/store/use-task-store';
+import { useUIStore } from '@/lib/store/use-ui-store';
 import { TaskTable } from '@/components/task-table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreateDialog } from '@/components/create-dialog';
+import { CreateDialog, EditTaskDialog } from '@/components/create-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
@@ -15,7 +16,8 @@ interface ListPageClientProps {
 }
 
 export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
-  const { tasks } = useTaskStore();
+  const { tasks, updateTask, deleteTask, toggleTaskComplete } = useTaskStore();
+  const { addToast } = useUIStore();
 
   // Filter tasks for this specific list from the store
   const listTasks = useMemo(() => {
@@ -38,6 +40,45 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
   const totalTasks = listTasks.length;
   const completedTasks = listTasks.filter((task) => task.completed).length;
   const pendingTasks = totalTasks - completedTasks;
+
+  // Task action handlers
+  const handleTaskUpdate = async (taskId: string, updates: any) => {
+    try {
+      await updateTask(taskId, updates);
+      addToast({
+        type: 'success',
+        title: 'Task updated',
+        description: 'Your changes have been saved.',
+      });
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Failed to update task',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  };
+
+  const handleTaskDelete = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+      addToast({
+        type: 'success',
+        title: 'Task deleted',
+        description: 'The task has been removed.',
+      });
+    } catch (error) {
+      addToast({
+        type: 'error',
+        title: 'Failed to delete task',
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
+  };
+
+  const handleTaskEdit = (task: any) => {
+    // This will be handled by the TaskTable internally with EditTaskDialog
+  };
 
   // Create task button for the TaskTable
   const createTaskButton = (
@@ -111,6 +152,9 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
           tasks={tasksForTable}
           title={`${listTitle} - Tasks`}
           createDialog={createTaskButton}
+          onTaskUpdate={handleTaskUpdate}
+          onTaskDelete={handleTaskDelete}
+          onTaskEdit={handleTaskEdit}
         />
       </div>
     </>

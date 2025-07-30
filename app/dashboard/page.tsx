@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { CreateDialog } from "@/components/create-dialog";
 import { StoreInitializer } from "@/components/store-initializer";
+import { DashboardTableClient } from "@/components/dashboard-client";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 
@@ -207,93 +208,7 @@ export default async function DashboardPage() {
 							</Card>
 						) : (
 							<Card>
-								<Table>
-									<TableHeader>
-										<TableRow>
-											<TableHead>List Name</TableHead>
-											<TableHead>Tasks</TableHead>
-											<TableHead>Completed</TableHead>
-											<TableHead>Progress</TableHead>
-											<TableHead>Created</TableHead>
-											<TableHead className="w-[100px]">Actions</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{userLists.map((list) => {
-											const taskCount = list.tasks.length;
-											const completedCount = list.tasks.filter(t => t.completed).length;
-											const progressPercentage = taskCount > 0 ? (completedCount / taskCount) * 100 : 0;
-
-											return (
-												<TableRow key={list.id}>
-													<TableCell className="font-medium">
-														<Link
-															href={`/lists/${list.id}`}
-															className="hover:underline"
-														>
-															{list.title}
-														</Link>
-													</TableCell>
-													<TableCell>
-														<Badge variant="secondary">{taskCount}</Badge>
-													</TableCell>
-													<TableCell>
-														<Badge 
-															variant="secondary"
-															className="bg-green-100 text-green-800"
-														>
-															{completedCount}
-														</Badge>
-													</TableCell>
-													<TableCell>
-														<div className="flex items-center gap-2">
-															<div className="w-16 bg-secondary rounded-full h-2">
-																<div
-																	className="bg-primary h-2 rounded-full transition-all"
-																	style={{
-																		width: `${progressPercentage}%`,
-																	}}
-																/>
-															</div>
-															<span className="text-xs text-muted-foreground">
-																{Math.round(progressPercentage)}%
-															</span>
-														</div>
-													</TableCell>
-													<TableCell className="text-muted-foreground">
-														{new Date(list.createdAt).toLocaleDateString()}
-													</TableCell>
-													<TableCell>
-														<DropdownMenu>
-															<DropdownMenuTrigger asChild>
-																<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-																	<MoreVertical className="h-4 w-4" />
-																</Button>
-															</DropdownMenuTrigger>
-															<DropdownMenuContent align="end">
-																<DropdownMenuItem asChild>
-																	<Link href={`/lists/${list.id}`}>
-																		<ArrowRight className="h-4 w-4 mr-2" />
-																		View Tasks
-																	</Link>
-																</DropdownMenuItem>
-																<DropdownMenuItem>
-																	<Edit2 className="h-4 w-4 mr-2" />
-																	Edit
-																</DropdownMenuItem>
-																<DropdownMenuSeparator />
-																<DropdownMenuItem className="text-destructive">
-																	<Trash2 className="h-4 w-4 mr-2" />
-																	Delete
-																</DropdownMenuItem>
-															</DropdownMenuContent>
-														</DropdownMenu>
-													</TableCell>
-												</TableRow>
-											);
-										})}
-									</TableBody>
-								</Table>
+								<DashboardTableClient initialLists={userLists} />
 							</Card>
 						)}
 					</div>
