@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTaskStore } from '@/lib/store/use-task-store';
 import { useUIStore } from '@/lib/store/use-ui-store';
 import { TaskTable } from '@/components/task-table';
@@ -18,6 +18,13 @@ interface ListPageClientProps {
 export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
   const { tasks, updateTask, deleteTask, toggleTaskComplete } = useTaskStore();
   const { addToast } = useUIStore();
+  const [editingTask, setEditingTask] = useState<{
+    id: string;
+    title: string;
+    description?: string;
+    listId: string;
+    listName: string;
+  } | null>(null);
 
   // Filter tasks for this specific list from the store
   const listTasks = useMemo(() => {
@@ -77,7 +84,13 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
   };
 
   const handleTaskEdit = (task: any) => {
-    // This will be handled by the TaskTable internally with EditTaskDialog
+    setEditingTask({
+      id: task.id,
+      title: task.title,
+      description: task.description || undefined,
+      listId: task.listId,
+      listName: listTitle,
+    });
   };
 
   // Create task button for the TaskTable
@@ -157,6 +170,15 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
           onTaskEdit={handleTaskEdit}
         />
       </div>
+
+      {/* Edit Task Dialog */}
+      {editingTask && (
+        <EditTaskDialog
+          task={editingTask}
+          open={!!editingTask}
+          onOpenChange={(open) => !open && setEditingTask(null)}
+        />
+      )}
     </>
   );
 }
