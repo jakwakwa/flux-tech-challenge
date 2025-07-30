@@ -71,6 +71,11 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
   // Use store lists if available, fallback to initial lists
   const displayLists = lists.length > 0 ? lists : initialLists;
 
+  // Determine which actions are available based on current route
+  const isDashboard = pathname === "/dashboard";
+  const isListPage = pathname.startsWith("/lists/");
+  const currentListId = isListPage ? pathname.split('/')[2] : null;
+
   const handleDeleteList = async (id: string, title: string) => {
     try {
       await deleteList(id);
@@ -126,45 +131,56 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                     side="bottom"
                     align="end"
                   >
-                    <DropdownMenuItem 
-                      onClick={() => setEditingList({ id: list.id, title: list.title })}
-                    >
-                      <span>Edit List</span>
-                    </DropdownMenuItem>
+                    {/* Edit List - Only show when on the specific list page */}
+                    {isListPage && currentListId === list.id && (
+                      <DropdownMenuItem 
+                        onClick={() => setEditingList({ id: list.id, title: list.title })}
+                      >
+                        <span>Edit List</span>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {/* Add Task - Always available */}
                     <DropdownMenuItem 
                       onClick={() => setCreateTaskDialogOpen(list.id)}
                     >
                       <span>Add Task</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem
-                          onSelect={(e) => e.preventDefault()}
-                          className="text-destructive"
-                        >
-                          <span>Delete List</span>
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the list
-                            "{list.title}" and all {taskCount} task{taskCount !== 1 ? 's' : ''} in this list.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteList(list.id, list.title)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete List
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    
+                    {/* Delete List - Only show when on dashboard */}
+                    {isDashboard && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                              className="text-destructive"
+                            >
+                              <span>Delete List</span>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the list
+                                "{list.title}" and all {taskCount} task{taskCount !== 1 ? 's' : ''} in this list.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteList(list.id, list.title)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete List
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </SidebarMenuItem>
@@ -173,8 +189,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
         </SidebarMenu>
       </SidebarGroup>
 
-      {/* Edit List Dialog */}
-      {editingList && (
+      {/* Edit List Dialog - Only available on list pages */}
+      {editingList && isListPage && (
         <EditListDialog
           list={editingList}
           open={!!editingList}
