@@ -2,7 +2,7 @@
 
 import { MoreHorizontal, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useListStore } from "@/lib/store/use-list-store";
 import { useUIStore } from "@/lib/store/use-ui-store";
@@ -63,6 +63,7 @@ interface NavTodoListsClientProps {
 
 export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { addToast } = useUIStore();
   const [editingList, setEditingList] = useState<{ id: string; title: string } | null>(null);
   const [createTaskDialogOpen, setCreateTaskDialogOpen] = useState<string | null>(null);
@@ -72,8 +73,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
   const isListPage = pathname.startsWith("/lists/");
   const currentListId = isListPage ? pathname.split('/')[2] : null;
 
-  // Only import deletion logic when on dashboard (where deletions can happen)
-  const { lists: dashboardLists, deleteList, isDeleting } = isDashboard 
+  // Import deletion logic when on dashboard OR when on a specific list page (for deleting current list)
+  const { lists: dashboardLists, deleteList, isDeleting } = isDashboard || isListPage
     ? useListStore() 
     : { lists: [], deleteList: null, isDeleting: {} as Record<string, boolean> };
 
@@ -89,8 +90,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
     ? (listPageLists.length > 0 ? listPageLists : initialLists)
     : initialLists;
 
-  // Only define delete handler when on dashboard
-  const handleDeleteList = isDashboard ? async (id: string, title: string) => {
+  // Define delete handler when on dashboard OR when on a list page
+  const handleDeleteList = (isDashboard || isListPage) ? async (id: string, title: string) => {
     try {
       await deleteList!(id);
       addToast({
@@ -98,6 +99,11 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
         title: 'List deleted',
         description: `"${title}" has been deleted successfully.`,
       });
+      
+      // If we're deleting the current list page, redirect to dashboard
+      if (isListPage && id === currentListId) {
+        router.push('/dashboard');
+      }
     } catch (error) {
       addToast({
         type: 'error',
@@ -131,8 +137,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction showOnHover disabled={isDashboard && isDeleting[list.id]}>
-                      {isDashboard && isDeleting[list.id] ? (
+                    <SidebarMenuAction showOnHover disabled={isDeleting[list.id]}>
+                      {isDeleting[list.id] ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         <MoreHorizontal />
@@ -161,8 +167,8 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                       <span>Add Task</span>
                     </DropdownMenuItem>
                     
-                    {/* Delete List - Only show when on dashboard */}
-                    {isDashboard && (
+                                        {/* Delete List - Show when on dashboard OR when on the current list page */}
+                    {(isDashboard || (isListPage && currentListId === list.id)) && (
                       <>
                         <DropdownMenuSeparator />
                         <AlertDialog>
@@ -180,16 +186,21 @@ export function NavTodoListsClient({ initialLists }: NavTodoListsClientProps) {
                               <AlertDialogDescription>
                                 This action cannot be undone. This will permanently delete the list
                                 "{list.title}" and all {taskCount} task{taskCount !== 1 ? 's' : ''} in this list.
+                                {isListPage && currentListId === list.id && (
+                                  <span className="block mt-2 font-medium">
+                                    You will be redirected to the dashboard after deletion.
+                                  </span>
+                                )}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                           <AlertDialogAction
-                               onClick={() => handleDeleteList?.(list.id, list.title)}
-                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                             >
-                               Delete List
-                             </AlertDialogAction>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteList?.(list.id, list.title)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete List
+                              </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
