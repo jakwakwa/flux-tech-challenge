@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateDialog, EditTaskDialog } from '@/components/create-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import type { Task } from '@/lib/types';
 
 interface ListPageClientProps {
   listId: string;
@@ -83,7 +84,7 @@ export function ListPageClient({ listId, listTitle }: ListPageClientProps) {
     }
   };
 
-  const handleTaskEdit = (task: any) => {
+  const handleTaskEdit = (task: Task) => {
     setEditingTask({
       id: task.id,
       title: task.title,
