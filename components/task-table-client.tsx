@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useListStore } from "@/lib/store/use-list-store";
 import { CreateDialog, EditTaskDialog } from "./create-dialog";
 import { type Task, TaskTable } from "./task-table";
 
@@ -12,11 +13,15 @@ interface TaskTableClientProps {
 	hasLists: boolean;
 }
 
-export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps) {
+export function TaskTableClient({
+	initialTasks,
+	hasLists,
+}: TaskTableClientProps) {
 	const router = useRouter();
 	const [tasks, setTasks] = useState(initialTasks);
 	const [editingTask, setEditingTask] = useState<Task | null>(null);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const { decrementTaskCount, updateTaskCompletion } = useListStore();
 
 	// Update tasks when initialTasks prop changes (e.g., when search params change)
 	useEffect(() => {
@@ -25,6 +30,8 @@ export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps
 
 	const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
 		try {
+			const originalTask = tasks.find((t) => t.id === taskId);
+
 			const response = await fetch("/api/tasks", {
 				method: "PATCH",
 				headers: {
@@ -46,6 +53,19 @@ export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps
 					),
 				);
 
+				// Update list store if completion status changed
+				if (
+					originalTask &&
+					updates.completed !== undefined &&
+					updates.completed !== originalTask.completed
+				) {
+					updateTaskCompletion(
+						originalTask.listId,
+						originalTask.completed,
+						updates.completed,
+					);
+				}
+
 				// Refresh the page to get updated data
 				router.refresh();
 			} else {
@@ -58,6 +78,8 @@ export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps
 
 	const handleTaskDelete = async (taskId: string) => {
 		try {
+			const taskToDelete = tasks.find((t) => t.id === taskId);
+
 			const response = await fetch(`/api/tasks?taskId=${taskId}`, {
 				method: "DELETE",
 			});
@@ -65,6 +87,11 @@ export function TaskTableClient({ initialTasks, hasLists }: TaskTableClientProps
 			if (response.ok) {
 				// Update local state
 				setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+				// Update list store
+				if (taskToDelete) {
+					decrementTaskCount(taskToDelete.listId, taskToDelete.completed);
+				}
 
 				// Refresh the page to get updated data
 				router.refresh();

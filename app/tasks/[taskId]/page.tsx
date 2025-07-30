@@ -90,7 +90,9 @@ export default async function TaskPage({ params }: TaskPageProps) {
 						</Breadcrumb>
 					</div>
 					<div className="ml-auto flex items-center gap-3 px-3">
-						<NavActions />
+						<NavActions
+							selectedList={{ id: task.list.id, title: task.list.title }}
+						/>
 					</div>
 				</header>
 

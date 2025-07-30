@@ -3,9 +3,6 @@
 import { CheckSquare, Edit, List, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { useListStore } from "@/lib/store/use-list-store";
-import { useTaskStore } from "@/lib/store/use-task-store";
-import { useUIStore } from "@/lib/store/use-ui-store";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -40,6 +37,9 @@ import {
 	SidebarMenuItem,
 	SidebarProvider,
 } from "@/components/ui/sidebar";
+import { useListStore } from "@/lib/store/use-list-store";
+import { useTaskStore } from "@/lib/store/use-task-store";
+import { useUIStore } from "@/lib/store/use-ui-store";
 import { Textarea } from "./ui/textarea";
 
 // Textarea component will be added when available
@@ -140,11 +140,13 @@ export function CreateDialog({
 			setTaskTitle("");
 			setTaskDescription("");
 			// Pre-select current list if we're on a list page and in task mode
-			setSelectedListId(defaultMode === "task" && currentListId ? currentListId : "");
+			setSelectedListId(
+				defaultMode === "task" && currentListId ? currentListId : "",
+			);
 			setListTitle("");
 			setListError(null);
 		}
-	}, [open, defaultMode]);
+	}, [open, defaultMode, currentListId]);
 
 	// Clear errors when dialog closes or mode changes
 	React.useEffect(() => {
@@ -165,9 +167,12 @@ export function CreateDialog({
 			});
 
 			if (newTask) {
+				// Task counts are automatically updated by the task store
+
 				// Check if task was created for a different list than current page
-				const isCreatedForDifferentList = currentListId && selectedListId !== currentListId;
-				
+				const isCreatedForDifferentList =
+					currentListId && selectedListId !== currentListId;
+
 				// Reset form completely
 				setTaskTitle("");
 				setTaskDescription("");
@@ -175,11 +180,11 @@ export function CreateDialog({
 				setOpen(false);
 				// Reset to default mode for next time
 				setActiveMode(defaultMode);
-				
+
 				addToast({
-					type: 'success',
-					title: 'Task created',
-					description: 'Your task has been added successfully.',
+					type: "success",
+					title: "Task created",
+					description: "Your task has been added successfully.",
 				});
 
 				// If task was created for a different list, redirect to that list
@@ -191,9 +196,10 @@ export function CreateDialog({
 		} catch (error) {
 			console.error("Error creating task:", error);
 			addToast({
-				type: 'error',
-				title: 'Failed to create task',
-				description: error instanceof Error ? error.message : 'Please try again.',
+				type: "error",
+				title: "Failed to create task",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
 			});
 		}
 	};
@@ -213,21 +219,24 @@ export function CreateDialog({
 				setOpen(false);
 				// Reset to default mode for next time
 				setActiveMode(defaultMode);
-				
+
 				addToast({
-					type: 'success',
-					title: 'List created',
-					description: 'Your list has been created successfully.',
+					type: "success",
+					title: "List created",
+					description: "Your list has been created successfully.",
 				});
 			}
 		} catch (error) {
 			console.error("Error creating list:", error);
-			const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "An unexpected error occurred. Please try again.";
 			setListError(errorMessage);
-			
+
 			addToast({
-				type: 'error',
-				title: 'Failed to create list',
+				type: "error",
+				title: "Failed to create list",
 				description: errorMessage,
 			});
 		}
@@ -463,18 +472,19 @@ export function EditTaskDialog({
 			}
 
 			setOpen(false);
-			
+
 			addToast({
-				type: 'success',
-				title: 'Task updated',
-				description: 'Your changes have been saved successfully.',
+				type: "success",
+				title: "Task updated",
+				description: "Your changes have been saved successfully.",
 			});
 		} catch (error) {
 			console.error("Error updating task:", error);
 			addToast({
-				type: 'error',
-				title: 'Failed to update task',
-				description: error instanceof Error ? error.message : 'Please try again.',
+				type: "error",
+				title: "Failed to update task",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
 			});
 		}
 	};
@@ -549,7 +559,9 @@ export function EditTaskDialog({
 							<div className="flex gap-3 pt-4">
 								<Button
 									type="submit"
-									disabled={isUpdating[task.id] || !taskTitle.trim() || !selectedListId}
+									disabled={
+										isUpdating[task.id] || !taskTitle.trim() || !selectedListId
+									}
 								>
 									{isUpdating[task.id] ? "Updating..." : "Update Task"}
 								</Button>
@@ -613,18 +625,19 @@ export function EditListDialog({
 			}
 
 			setOpen(false);
-			
+
 			addToast({
-				type: 'success',
-				title: 'List updated',
-				description: 'Your list has been updated successfully.',
+				type: "success",
+				title: "List updated",
+				description: "Your list has been updated successfully.",
 			});
 		} catch (error) {
 			console.error("Error updating list:", error);
 			addToast({
-				type: 'error',
-				title: 'Failed to update list',
-				description: error instanceof Error ? error.message : 'Please try again.',
+				type: "error",
+				title: "Failed to update list",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
 			});
 		}
 	};

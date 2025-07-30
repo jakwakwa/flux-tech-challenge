@@ -140,6 +140,17 @@ export const useTaskStore = create<TaskState>()(
 							state.isCreating = false;
 						});
 
+						// Notify list store of new task
+						if (typeof window !== "undefined") {
+							import("./use-list-store")
+								.then(({ useListStore }) => {
+									useListStore
+										.getState()
+										.incrementTaskCount(newTask.listId, newTask.completed);
+								})
+								.catch(console.error);
+						}
+
 						return newTask;
 					} catch (error) {
 						set((state) => {
@@ -184,6 +195,25 @@ export const useTaskStore = create<TaskState>()(
 						set((state) => {
 							state.isUpdating[id] = false;
 						});
+
+						// Notify list store of completion status change
+						if (
+							typeof window !== "undefined" &&
+							data.completed !== undefined &&
+							originalTask
+						) {
+							import("./use-list-store")
+								.then(({ useListStore }) => {
+									useListStore
+										.getState()
+										.updateTaskCompletion(
+											originalTask.listId,
+											originalTask.completed,
+											data.completed ?? false,
+										);
+								})
+								.catch(console.error);
+						}
 					} catch (error) {
 						set((state) => {
 							// Revert on error
@@ -227,6 +257,20 @@ export const useTaskStore = create<TaskState>()(
 						set((state) => {
 							delete state.isDeleting[id];
 						});
+
+						// Notify list store of deleted task
+						if (typeof window !== "undefined" && originalTask) {
+							import("./use-list-store")
+								.then(({ useListStore }) => {
+									useListStore
+										.getState()
+										.decrementTaskCount(
+											originalTask.listId,
+											originalTask.completed,
+										);
+								})
+								.catch(console.error);
+						}
 					} catch (error) {
 						set((state) => {
 							// Restore on error

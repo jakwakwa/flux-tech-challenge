@@ -60,7 +60,7 @@ export async function AppSidebar({
 
 	const navMain = [
 		{
-			title: "ListsDashboard",
+			title: "Todo Lists",
 			url: "/dashboard",
 			icon: "Home" as const,
 			isActive: true,
@@ -71,7 +71,7 @@ export async function AppSidebar({
 		<Sidebar className="border-r-0" {...props}>
 			<SidebarHeader>
 				<div className="p-2">
-					<h2 className="text-lg font-semibold px-2">Flux Todo List App</h2>
+					<h2 className="text-lg font-semibold px-2">Todo List App</h2>
 				</div>
 				<NavMain items={navMain} />
 			</SidebarHeader>

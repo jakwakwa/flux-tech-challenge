@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { ProgressBarProvider } from "@/components/progress-bar-provider";
-import { ToastProvider } from "@/components/providers/toast-provider";
 import { ErrorBoundaryProvider } from "@/components/providers/error-boundary-provider";
 import { ModalProvider } from "@/components/providers/modal-provider";
+import { ToastProvider } from "@/components/providers/toast-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -14,8 +14,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
 	metadataBase: new URL(defaultUrl),
-	title: "Flux Todo App - Organize Your Tasks",
-	description: "A simple and intuitive todo list application to organize your tasks and boost productivity.",
+	title: "Todo List App - Organize Your Tasks",
+	description:
+		"A simple and intuitive todo list application to organize your tasks and boost productivity.",
 };
 
 const geistSans = Geist({
